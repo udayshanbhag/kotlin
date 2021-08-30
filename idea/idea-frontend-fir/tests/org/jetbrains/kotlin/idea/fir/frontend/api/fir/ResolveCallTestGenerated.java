@@ -205,8 +205,14 @@ public class ResolveCallTestGenerated extends AbstractResolveCallTest {
     }
 
     @Test
-    @TestMetadata("variableWithInvoke.kt")
-    public void testVariableWithInvoke() throws Exception {
-        runTest("idea/idea-frontend-fir/testData/analysisSession/resolveCall/variableWithInvoke.kt");
+    @TestMetadata("variableWithExtensionInvoke.kt")
+    public void testVariableWithExtensionInvoke() throws Exception {
+        runTest("idea/idea-frontend-fir/testData/analysisSession/resolveCall/variableWithExtensionInvoke.kt");
+    }
+
+    @Test
+    @TestMetadata("variableWithMemberInvoke.kt")
+    public void testVariableWithMemberInvoke() throws Exception {
+        runTest("idea/idea-frontend-fir/testData/analysisSession/resolveCall/variableWithMemberInvoke.kt");
     }
 }

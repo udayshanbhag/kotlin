@@ -104,7 +104,8 @@ internal class KtFirCallResolver(
         return when {
             firCall.isImplicitFunctionCall() -> {
                 val target = with(FirReferenceResolveHelper) {
-                    val calleeReference = (firCall.dispatchReceiver as FirQualifiedAccessExpression).calleeReference
+                    val calleeReference = ((firCall.extensionReceiver as? FirQualifiedAccessExpression)
+                        ?: firCall.dispatchReceiver as FirQualifiedAccessExpression).calleeReference
                     calleeReference.toTargetSymbol(session, firSymbolBuilder).singleOrNull()
                 }
                 when (target) {
