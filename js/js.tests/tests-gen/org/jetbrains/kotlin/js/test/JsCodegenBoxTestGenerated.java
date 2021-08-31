@@ -6963,6 +6963,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         }
 
         @Test
+        @TestMetadata("kt47549.kt")
+        public void testKt47549() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/kt47549.kt");
+        }
+
+        @Test
         @TestMetadata("kt49168.kt")
         public void testKt49168() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/kt49168.kt");
@@ -11630,6 +11636,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("genericNull.kt")
         public void testGenericNull() throws Exception {
             runTest("compiler/testData/codegen/box/elvis/genericNull.kt");
+        }
+
+        @Test
+        @TestMetadata("kt24209.kt")
+        public void testKt24209() throws Exception {
+            runTest("compiler/testData/codegen/box/elvis/kt24209.kt");
         }
 
         @Test
@@ -29102,6 +29114,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("kt4281.kt")
         public void testKt4281() throws Exception {
             runTest("compiler/testData/codegen/box/regressions/kt4281.kt");
+        }
+
+        @Test
+        @TestMetadata("kt47279.kt")
+        public void testKt47279() throws Exception {
+            runTest("compiler/testData/codegen/box/regressions/kt47279.kt");
         }
 
         @Test
