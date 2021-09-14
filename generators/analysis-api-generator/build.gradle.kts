@@ -20,4 +20,4 @@ dependencies {
     testApiJUnit5()
 }
 
-val generateFrontendApiTests by generator("org.jetbrains.kotlin.generators.tests.frontend.api.GenerateTestsKt")
+val generateFrontendApiTests by generator("org.jetbrains.kotlin.generators.tests.analysis.api.GenerateTestsKt")
