@@ -108,6 +108,10 @@ fun main(args: Array<String>) {
             testClass<AbstractPsiTypeProviderTest> {
                 model("components/psiTypeProvider")
             }
+
+            testClass<AbstractExpressionPsiTypeProviderTest> {
+                model("components/expressionPsiType")
+            }
         }
 
         testGroup("analysis/analysis-api-fe10/tests", "analysis/analysis-api/testData") {
