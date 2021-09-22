@@ -1,23 +1,11 @@
-class X(val ok: String) {
-    fun y(): String = ok
-}
-
+// DONT_TARGET_EXACT_BACKEND: WASM
+// WASM_MUTE_REASON: PROPERTY_REFERENCES
 fun box(): String {
-    val x = X("OK")
-    val y = x::y
-    return y()
+    class Local {
+        var result = "Fail"
+    }
+
+    val l = Local()
+    (Local::result).set(l, "OK")
+    return (Local::result).get(l)
 }
-
-//fun y(): String = "OK"
-//
-//fun box(): String {
-//    val y = ::y
-//    return y.invoke()
-//}
-
-//val x = "OK"
-//
-//fun box(): String {
-//    val x = ::x
-//    return x.get()
-//}
