@@ -213,16 +213,17 @@ class GenerationState private constructor(
         else JvmStringConcat.INLINE
 
     val samConversionsScheme = run {
-        val fromConfig = configuration.get(JVMConfigurationKeys.SAM_CONVERSIONS)
-        if (fromConfig != null && target >= fromConfig.minJvmTarget)
-            fromConfig
-        else if (
-            target >= JvmClosureGenerationScheme.INDY.minJvmTarget &&
-            languageVersionSettings.supportsFeature(LanguageFeature.SamWrapperClassesAreSynthetic)
-        )
-            JvmClosureGenerationScheme.INDY
-        else
-            JvmClosureGenerationScheme.CLASS
+        JvmClosureGenerationScheme.CLASS
+//        val fromConfig = configuration.get(JVMConfigurationKeys.SAM_CONVERSIONS)
+//        if (fromConfig != null && target >= fromConfig.minJvmTarget)
+//            fromConfig
+//        else if (
+//            target >= JvmClosureGenerationScheme.INDY.minJvmTarget &&
+//            languageVersionSettings.supportsFeature(LanguageFeature.SamWrapperClassesAreSynthetic)
+//        )
+//            JvmClosureGenerationScheme.INDY
+//        else
+//            JvmClosureGenerationScheme.CLASS
     }
 
     val lambdasScheme = run {

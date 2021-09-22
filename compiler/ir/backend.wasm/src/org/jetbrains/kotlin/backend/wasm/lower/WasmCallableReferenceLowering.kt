@@ -133,17 +133,24 @@ internal class WasmCallableReferenceLowering(private val context: WasmBackendCon
             // origin = if (isLambda) JvmLoweredDeclarationOrigin.LAMBDA_IMPL else JvmLoweredDeclarationOrigin.FUNCTION_REFERENCE_IMPL
             name = SpecialNames.NO_NAME_PROVIDED
         }.apply {
-            parent = currentDeclarationParent!!
-            // TODO(WASM)
-            // superTypes += superType
-            if (samSuperType == null)
-                superTypes += functionSuperClass.typeWith(parameterTypes)
-            // TODO(WASM)
-            // if (irFunctionReference.isSuspend) superTypes += context.ir.symbols.suspendFunctionInterface.defaultType
+            parent = currentDeclarationParent ?: error("No current declaration parent at ${irFunctionReference.dump()}")
+            superTypes = listOfNotNull(
+                samSuperType,
+                if (samSuperType == null)
+                    functionSuperClass.typeWith(parameterTypes)
+                else null,
+                //TODO(WASM)
+//                if (irFunctionReference.isSuspend)
+//                    context.ir.symbols.suspendFunctionInterface.defaultType
+//                else null,
+//                if (needToGenerateSamEqualsHashCodeMethods)
+//                    context.ir.symbols.functionAdapter.defaultType
+//                else null,
+            )
             createImplicitParameterDeclarationWithWrappedDescriptor()
             copyAttributes(irFunctionReference)
             if (isLambda) {
-                this.metadata = irFunctionReference.symbol.owner.metadata
+                metadata = irFunctionReference.symbol.owner.metadata
             }
             addField("receiver", context.irBuiltIns.anyNType)
         }
