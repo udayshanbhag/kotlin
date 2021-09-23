@@ -30,11 +30,15 @@ class KtFirAnalysisSessionProvider(private val project: Project) : KtAnalysisSes
     @InvalidWayOfUsingAnalysisSession
     override fun getAnalysisSession(contextElement: KtElement, factory: ValidityTokenFactory): KtAnalysisSession {
         val resolveState = contextElement.getResolveState()
-        return cache.getAnalysisSession(resolveState to factory.identifier) {
-            val validityToken = factory.create(project)
-            @Suppress("DEPRECATION")
-            KtFirAnalysisSession.createAnalysisSessionByResolveState(resolveState, validityToken, contextElement)
-        }
+        return createAnalysisSession(resolveState, factory)
+    }
+
+    private fun createAnalysisSession(
+        resolveState: FirModuleResolveState,
+        factory: ValidityTokenFactory,
+    ) = cache.getAnalysisSession(resolveState to factory.identifier) {
+        val validityToken = factory.create(project)
+        KtFirAnalysisSession.createAnalysisSessionByResolveState(resolveState, validityToken)
     }
 
     override fun getAnalysisSessionBySymbol(contextSymbol: KtSymbol): KtAnalysisSession {
@@ -42,7 +46,7 @@ class KtFirAnalysisSessionProvider(private val project: Project) : KtAnalysisSes
         val resolveState = contextSymbol.firRef.resolveState
         val token = contextSymbol.token
         return getCachedAnalysisSession(resolveState, token)
-            ?: error("analysis session was not found for ${contextSymbol::class}, symbol.isValid=${contextSymbol.isValid()}")
+            ?: createAnalysisSession(resolveState, contextSymbol.token.factory)
     }
 
     private fun getCachedAnalysisSession(resolveState: FirModuleResolveState, token: ValidityToken): KtAnalysisSession? {
