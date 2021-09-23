@@ -475,6 +475,7 @@ include ":generators:analysis-api-generator",
         ":analysis:analysis-api-fir",
         ":analysis:analysis-api",
         ":analysis:analysis-api-providers",
+        ":analysis:analysis-utils",
         ":analysis:symbol-light-classes",
         ":analysis:project-structure"
 
