@@ -648,6 +648,7 @@ class KotlinCoreEnvironment private constructor(
             TypeResolutionInterceptor.registerExtensionPoint(project)
             CandidateInterceptor.registerExtensionPoint(project)
             DescriptorSerializerPlugin.registerExtensionPoint(project)
+            TypeAttributeTranslators.registerExtensionPoint(project)
         }
 
         internal fun registerExtensionsFromPlugins(project: MockProject, configuration: CompilerConfiguration) {
