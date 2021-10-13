@@ -77,7 +77,7 @@ class PostponedArgumentInputTypesResolver(
             }
         }
 
-        val annotations = functionalTypesFromConstraints?.map { it.type.getAnnotations() }?.flatten()?.distinct()
+        val annotations = functionalTypesFromConstraints?.map { it.type.getAttributes() }?.flatten()?.distinct()
 
         // An extension function flag can only come from a declaration of anonymous function: `select({ this + it }, fun Int.(x: Int) = 10)`
         val (parameterTypesFromDeclarationOfRelatedLambdas, isThereExtensionFunctionAmongRelatedLambdas) =
