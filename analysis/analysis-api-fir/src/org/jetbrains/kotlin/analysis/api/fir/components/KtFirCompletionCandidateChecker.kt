@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.fir.declarations.FirVariable
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.resolve.calls.ImplicitReceiverValue
 import org.jetbrains.kotlin.fir.resolve.inference.receiverType
+import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -45,12 +46,10 @@ internal class KtFirCompletionCandidateChecker(
         possibleExplicitReceiver: KtExpression?,
     ): KtExtensionApplicabilityResult = withValidityAssertion {
         require(firSymbolForCandidate is KtFirSymbol<*>)
-        return firSymbolForCandidate.firRef.withFir(
-            phase = FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE
-        ) { declaration ->
-            check(declaration is FirCallableDeclaration)
-            checkExtension(declaration, originalFile, nameExpression, possibleExplicitReceiver)
-        }
+        firSymbolForCandidate.firSymbol.ensureResolved(FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE)
+        val declaration = firSymbolForCandidate.firSymbol.fir as FirCallableDeclaration
+        checkExtension(declaration, originalFile, nameExpression, possibleExplicitReceiver)
+
     }
 
     private fun checkExtension(

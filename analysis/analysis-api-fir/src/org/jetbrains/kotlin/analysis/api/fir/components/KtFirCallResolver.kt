@@ -70,7 +70,7 @@ internal class KtFirCallResolver(
                     access.isRead -> propertySymbol.getterSymbol?.fir
                     else -> null
                 } ?: return null
-                val accessorSymbol = analysisSession.firSymbolBuilder.functionLikeBuilder.buildFunctionLikeSymbol(accessor)
+                val accessorSymbol = analysisSession.firSymbolBuilder.functionLikeBuilder.buildFunctionLikeSymbol(accessor.symbol)
                 val target =
                     if (!access.isWrite || setterValue != null)
                         KtSuccessCallTarget(accessorSymbol, token)
@@ -169,13 +169,11 @@ internal class KtFirCallResolver(
     }
 
     private fun FirArrayOfCall.createSubstitutorFromTypeArguments(arrayOfSymbol: KtFirFunctionSymbol): KtSubstitutor {
-        return arrayOfSymbol.firRef.withFir {
-            // No type parameter means this is an arrayOf call of primitives, in which case there is no type arguments
-            val typeParameter = it.typeParameters.singleOrNull() ?: return@withFir null
-            val elementType = typeRef.coneTypeSafe<ConeClassLikeType>()?.arrayElementType() ?: return@withFir null
-            val coneSubstitutor = substitutorByMap(mapOf(typeParameter.symbol to elementType), rootModuleSession)
-            firSymbolBuilder.typeBuilder.buildSubstitutor(coneSubstitutor)
-        } ?: KtSubstitutor.Empty(token)
+        // No type parameter means this is an arrayOf call of primitives, in which case there is no type arguments
+        val typeParameter = arrayOfSymbol.typeParameters.singleOrNull() ?: return KtSubstitutor.Empty(token)
+        val elementType = typeRef.coneTypeSafe<ConeClassLikeType>()?.arrayElementType() ?: return KtSubstitutor.Empty(token)
+        val coneSubstitutor = substitutorByMap(mapOf(typeParameter.firSymbol to elementType), rootModuleSession)
+        return firSymbolBuilder.typeBuilder.buildSubstitutor(coneSubstitutor)
     }
 
     private fun resolveCall(firCall: FirFunctionCall): KtCall? {
@@ -316,9 +314,7 @@ internal class KtFirCallResolver(
         arrayOfCallSymbol: KtFirFunctionSymbol
     ): LinkedHashMap<KtExpression, KtValueParameterSymbol> {
         val ktArgumentMapping = LinkedHashMap<KtExpression, KtValueParameterSymbol>()
-        val parameterSymbol = arrayOfCallSymbol.firRef.withFir {
-            it.valueParameters.single().buildSymbol(firSymbolBuilder) as KtValueParameterSymbol
-        }
+        val parameterSymbol = arrayOfCallSymbol.valueParameters.single()
         for (firExpression in argumentList.arguments) {
             mapArgumentExpressionToParameter(firExpression, parameterSymbol, ktArgumentMapping)
         }

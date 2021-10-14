@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.ValidityTokenOwner
 import org.jetbrains.kotlin.analysis.api.fir.KtSymbolByFirBuilder
 import org.jetbrains.kotlin.analysis.api.fir.getCandidateSymbols
 import org.jetbrains.kotlin.analysis.api.fir.utils.cached
-import org.jetbrains.kotlin.analysis.api.fir.utils.weakRef
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
@@ -120,7 +119,7 @@ internal class KtFirClassErrorType(
 
     override val candidateClassSymbols: Collection<KtClassLikeSymbol> by cached {
         val symbols = coneType.diagnostic.getCandidateSymbols().filterIsInstance<FirClassLikeSymbol<*>>()
-        symbols.map { builder.classifierBuilder.buildClassLikeSymbol(it.fir) }
+        symbols.map { builder.classifierBuilder.buildClassLikeSymbol(it) }
     }
 
     override fun asStringForDebugging(): String = withValidityAssertion { coneType.render() }

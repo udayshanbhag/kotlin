@@ -5,12 +5,6 @@
 
 package org.jetbrains.kotlin.analysis.api.fir.scopes
 
-import org.jetbrains.kotlin.fir.isSubstitutionOverride
-import org.jetbrains.kotlin.fir.scopes.FirContainingNamesAwareScope
-import org.jetbrains.kotlin.fir.scopes.FirScope
-import org.jetbrains.kotlin.fir.scopes.processClassifiersByName
-import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
-import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
 import org.jetbrains.kotlin.analysis.api.fir.KtSymbolByFirBuilder
 import org.jetbrains.kotlin.analysis.api.fir.utils.cached
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
@@ -18,7 +12,13 @@ import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
 import org.jetbrains.kotlin.analysis.api.withValidityAssertion
+import org.jetbrains.kotlin.fir.isSubstitutionOverride
+import org.jetbrains.kotlin.fir.scopes.FirContainingNamesAwareScope
+import org.jetbrains.kotlin.fir.scopes.FirScope
+import org.jetbrains.kotlin.fir.scopes.processClassifiersByName
+import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.name.Name
 
 internal abstract class KtFirDelegatingScope<S : FirContainingNamesAwareScope>(
@@ -64,14 +64,14 @@ internal fun FirScope.getCallableSymbols(callableNames: Collection<Name>, builde
     callableNames.forEach { name ->
         val callables = mutableListOf<KtCallableSymbol>()
         processFunctionsByName(name) { firSymbol ->
-            callables.add(builder.functionLikeBuilder.buildFunctionSymbol(firSymbol.fir))
+            callables.add(builder.functionLikeBuilder.buildFunctionSymbol(firSymbol))
         }
         processPropertiesByName(name) { firSymbol ->
             val symbol = when {
                 firSymbol is FirPropertySymbol && firSymbol.fir.isSubstitutionOverride -> {
-                    builder.variableLikeBuilder.buildVariableSymbol(firSymbol.fir)
+                    builder.variableLikeBuilder.buildVariableSymbol(firSymbol)
                 }
-                else -> builder.callableBuilder.buildCallableSymbol(firSymbol.fir)
+                else -> builder.callableBuilder.buildCallableSymbol(firSymbol)
             }
             callables.add(symbol)
         }
@@ -101,7 +101,7 @@ internal fun FirScope.getConstructors(builder: KtSymbolByFirBuilder): Sequence<K
     sequence {
         val constructorSymbols = mutableListOf<KtConstructorSymbol>()
         processDeclaredConstructors { firSymbol ->
-            constructorSymbols.add(builder.functionLikeBuilder.buildConstructorSymbol(firSymbol.fir))
+            constructorSymbols.add(builder.functionLikeBuilder.buildConstructorSymbol(firSymbol))
         }
         yieldAll(constructorSymbols)
     }

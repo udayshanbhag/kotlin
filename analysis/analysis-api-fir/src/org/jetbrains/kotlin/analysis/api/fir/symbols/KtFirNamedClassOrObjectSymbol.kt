@@ -6,22 +6,13 @@
 package org.jetbrains.kotlin.analysis.api.fir.symbols
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.descriptors.Visibilities
-import org.jetbrains.kotlin.descriptors.Visibility
-import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.declarations.utils.*
-import org.jetbrains.kotlin.analysis.api.fir.findPsi
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.FirModuleResolveState
 import org.jetbrains.kotlin.analysis.api.fir.KtSymbolByFirBuilder
+import org.jetbrains.kotlin.analysis.api.fir.findPsi
 import org.jetbrains.kotlin.analysis.api.fir.symbols.annotations.containsAnnotation
 import org.jetbrains.kotlin.analysis.api.fir.symbols.annotations.getAnnotationClassIds
 import org.jetbrains.kotlin.analysis.api.fir.symbols.annotations.toAnnotationsList
 import org.jetbrains.kotlin.analysis.api.fir.symbols.pointers.KtFirClassOrObjectInLibrarySymbolPointer
 import org.jetbrains.kotlin.analysis.api.fir.utils.cached
-import org.jetbrains.kotlin.analysis.api.fir.utils.firRef
-import org.jetbrains.kotlin.analysis.api.fir.utils.weakRef
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotationCall
@@ -31,86 +22,100 @@ import org.jetbrains.kotlin.analysis.api.symbols.pointers.CanNotCreateSymbolPoin
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtPsiBasedSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
 import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
+import org.jetbrains.kotlin.analysis.api.withValidityAssertion
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.FirModuleResolveState
+import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.fir.declarations.FirTypeParameter
+import org.jetbrains.kotlin.fir.declarations.utils.*
+import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 
 internal class KtFirNamedClassOrObjectSymbol(
-    fir: FirRegularClass,
-    resolveState: FirModuleResolveState,
+    override val firSymbol: FirRegularClassSymbol,
+    override val resolveState: FirModuleResolveState,
     override val token: ValidityToken,
     private val builder: KtSymbolByFirBuilder
-) : KtNamedClassOrObjectSymbol(), KtFirSymbol<FirRegularClass> {
-    override val firRef = firRef(fir, resolveState)
-    override val psi: PsiElement? by firRef.withFirAndCache { fir -> fir.findPsi(fir.moduleData.session) }
-    override val name: Name get() = firRef.withFir { it.name }
+) : KtNamedClassOrObjectSymbol(), KtFirSymbol<FirRegularClassSymbol> {
+    override val psi: PsiElement? by cached { firSymbol.findPsi() }
+
+    override val name: Name get() = withValidityAssertion { firSymbol.name }
+
     override val classIdIfNonLocal: ClassId?
-        get() = firRef.withFir { fir ->
-            fir.symbol.classId.takeUnless { it.isLocal }
+        get() = withValidityAssertion { firSymbol.classId.takeUnless { it.isLocal } }
+
+    /* FirRegularClass modality is not modified by STATUS, so it can be taken from RAW */
+    override val modality: Modality
+        get() = withValidityAssertion {
+            firSymbol.fir.modality
+                ?: when (classKind) { // default modality
+                    KtClassKind.INTERFACE -> Modality.ABSTRACT
+                    // Enum class should not be `final`, since its entries extend it.
+                    // It could be either `abstract` w/o ctor, or empty modality w/ private ctor.
+                    KtClassKind.ENUM_CLASS -> Modality.OPEN
+                    else -> Modality.FINAL
+                }
         }
 
-    /* FirRegularClass modality does not modified by STATUS so it can be taken from RAW */
-    override val modality: Modality
-        get() = getModality(
-            FirResolvePhase.RAW_FIR,
-            when (classKind) { // default modality
-                KtClassKind.INTERFACE -> Modality.ABSTRACT
-                // Enum class should not be `final`, since its entries extend it.
-                // It could be either `abstract` w/o ctor, or empty modality w/ private ctor.
-                KtClassKind.ENUM_CLASS -> Modality.OPEN
-                else -> Modality.FINAL
-            }
-        )
 
-    /* FirRegularClass visibility are not modified by STATUS only for Unknown so it can be taken from RAW */
+    /* FirRegularClass visibility is not modified by STATUS only for Unknown, so it can be taken from RAW */
     override val visibility: Visibility
-        get() = when (val possiblyRawVisibility = getVisibility(FirResolvePhase.RAW_FIR)) {
-            Visibilities.Unknown -> if (firRef.withFir { it.isLocal }) Visibilities.Local else Visibilities.Public
+        get() = when (val possiblyRawVisibility = firSymbol.fir.visibility) {
+            Visibilities.Unknown -> if (firSymbol.fir.isLocal) Visibilities.Local else Visibilities.Public
             else -> possiblyRawVisibility
         }
 
-    override val annotations: List<KtAnnotationCall> by cached { firRef.toAnnotationsList() }
-    override fun containsAnnotation(classId: ClassId): Boolean = firRef.containsAnnotation(classId)
-    override val annotationClassIds: Collection<ClassId> by cached { firRef.getAnnotationClassIds() }
+    override val annotations: List<KtAnnotationCall> by cached { firSymbol.toAnnotationsList(token) }
+    override fun containsAnnotation(classId: ClassId): Boolean = withValidityAssertion { firSymbol.containsAnnotation(classId) }
+    override val annotationClassIds: Collection<ClassId> by cached { firSymbol.getAnnotationClassIds() }
 
-    override val isInner: Boolean get() = firRef.withFir { it.isInner }
-    override val isData: Boolean get() = firRef.withFir { it.isData }
-    override val isInline: Boolean get() = firRef.withFir { it.isInline }
-    override val isFun: Boolean get() = firRef.withFir { it.isFun }
-    override val isExternal: Boolean get() = firRef.withFir { it.isExternal }
+    override val isInner: Boolean get() = withValidityAssertion { firSymbol.isInner }
+    override val isData: Boolean get() = withValidityAssertion { firSymbol.isData }
+    override val isInline: Boolean get() = withValidityAssertion { firSymbol.isInline }
+    override val isFun: Boolean get() = withValidityAssertion { firSymbol.isFun }
+    override val isExternal: Boolean get() = withValidityAssertion { firSymbol.isExternal }
 
-    override val companionObject: KtFirNamedClassOrObjectSymbol? by firRef.withFirAndCache { fir ->
-        fir.companionObject?.let { builder.classifierBuilder.buildNamedClassOrObjectSymbol(it) }
-    }
-
-    override val superTypes: List<KtTypeAndAnnotations> by cached {
-        firRef.superTypesAndAnnotationsListForRegularClass(builder)
-    }
-
-    override val typeParameters by firRef.withFirAndCache { fir ->
-        fir.typeParameters.filterIsInstance<FirTypeParameter>().map { typeParameter ->
-            builder.classifierBuilder.buildTypeParameterSymbol(typeParameter.symbol.fir)
+    override val companionObject: KtFirNamedClassOrObjectSymbol? by cached {
+        firSymbol.companionObjectSymbol?.let {
+            builder.classifierBuilder.buildNamedClassOrObjectSymbol(it)
         }
     }
 
+    override val superTypes: List<KtTypeAndAnnotations> by cached {
+        firSymbol.superTypesAndAnnotationsListForRegularClass(builder, token)
+    }
+
+    override val typeParameters = withValidityAssertion {
+        firSymbol.fir.typeParameters.filterIsInstance<FirTypeParameter>().map { typeParameter ->
+            builder.classifierBuilder.buildTypeParameterSymbol(typeParameter.symbol)
+        }
+    }
+
+
     override val classKind: KtClassKind
-        get() = firRef.withFir { fir ->
-            when (fir.classKind) {
+        get() = withValidityAssertion {
+            when (firSymbol.classKind) {
                 ClassKind.INTERFACE -> KtClassKind.INTERFACE
                 ClassKind.ENUM_CLASS -> KtClassKind.ENUM_CLASS
                 ClassKind.ENUM_ENTRY -> KtClassKind.ENUM_ENTRY
                 ClassKind.ANNOTATION_CLASS -> KtClassKind.ANNOTATION_CLASS
                 ClassKind.CLASS -> KtClassKind.CLASS
-                ClassKind.OBJECT -> if (fir.isCompanion) KtClassKind.COMPANION_OBJECT else KtClassKind.OBJECT
+                ClassKind.OBJECT -> if (firSymbol.isCompanion) KtClassKind.COMPANION_OBJECT else KtClassKind.OBJECT
             }
         }
+
     override val symbolKind: KtSymbolKind
-        get() = firRef.withFir { fir ->
+        get() = withValidityAssertion {
             when {
-                fir.isLocal -> KtSymbolKind.LOCAL
-                fir.symbol.classId.isNestedClass -> KtSymbolKind.CLASS_MEMBER
+                firSymbol.isLocal -> KtSymbolKind.LOCAL
+                firSymbol.classId.isNestedClass -> KtSymbolKind.CLASS_MEMBER
                 else -> KtSymbolKind.TOP_LEVEL
             }
         }
+
 
     override fun createPointer(): KtSymbolPointer<KtNamedClassOrObjectSymbol> {
         KtPsiBasedSymbolPointer.createForSymbolFromSource(this)?.let { return it }

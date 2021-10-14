@@ -5,37 +5,36 @@
 
 package org.jetbrains.kotlin.analysis.api.fir.symbols.annotations
 
-import org.jetbrains.kotlin.analysis.api.fir.utils.FirRefWithValidityCheck
-import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.ResolveType
+import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.declarations.FirAnnotatedDeclaration
-import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
-import org.jetbrains.kotlin.fir.types.classId
-import org.jetbrains.kotlin.fir.declarations.FirRegularClass
-import org.jetbrains.kotlin.fir.declarations.resolved
-import org.jetbrains.kotlin.fir.declarations.primaryConstructorIfAny
+import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.*
+import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.toSymbol
+import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
+import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
+import org.jetbrains.kotlin.fir.types.classId
 import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.name.ClassId
 
 internal fun FirAnnotation.getClassId(session: FirSession): ClassId? =
     coneClassLikeType?.fullyExpandedType(session)?.classId
 
-internal fun FirRefWithValidityCheck<FirAnnotatedDeclaration>.toAnnotationsList() = withFir { fir ->
-    fir.annotations.map { KtFirAnnotationCall(this, it) }
+internal fun FirBasedSymbol<out FirAnnotatedDeclaration>.toAnnotationsList(token: ValidityToken): List<KtFirAnnotationCall> {
+    ensureResolved(FirResolvePhase.TYPES)
+    return fir.annotations.map { KtFirAnnotationCall(this, it, token) }
 }
 
-internal fun FirRefWithValidityCheck<FirAnnotatedDeclaration>.containsAnnotation(classId: ClassId): Boolean =
-    withFirByType(ResolveType.AnnotationType) { fir ->
-        fir.annotations.any { it.getClassId(fir.moduleData.session) == classId }
-    }
+internal fun FirBasedSymbol<out FirAnnotatedDeclaration>.containsAnnotation(classId: ClassId): Boolean {
+    ensureResolved(FirResolvePhase.TYPES)
+    return fir.annotations.any { it.getClassId(fir.moduleData.session) == classId }
+}
 
-internal fun FirRefWithValidityCheck<FirAnnotatedDeclaration>.getAnnotationClassIds(): Collection<ClassId> =
-    withFirByType(ResolveType.AnnotationType) { fir ->
-        fir.annotations.mapNotNull { it.getClassId(fir.moduleData.session) }
-    }
+internal fun FirBasedSymbol<out FirAnnotatedDeclaration>.getAnnotationClassIds(): Collection<ClassId> {
+    ensureResolved(FirResolvePhase.TYPES)
+    return fir.annotations.mapNotNull { it.getClassId(fir.moduleData.session) }
+}
 
 internal fun mapAnnotationParameters(annotation: FirAnnotation, session: FirSession): Map<String, FirExpression> {
     if (annotation.resolved) return annotation.argumentMapping.mapping.mapKeys { (name, _) -> name.identifier }

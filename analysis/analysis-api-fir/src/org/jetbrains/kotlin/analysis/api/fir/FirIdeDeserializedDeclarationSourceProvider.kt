@@ -8,11 +8,12 @@ package org.jetbrains.kotlin.analysis.api.fir
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.KtDeclarationAndFirDeclarationEqualityChecker
+import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.FirIdeSession
 import org.jetbrains.kotlin.analysis.providers.createDeclarationProvider
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.KtDeclarationAndFirDeclarationEqualityChecker
-import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.FirIdeSession
+import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -141,6 +142,10 @@ private fun FirElement.getAllowedPsi() = when (val source = source) {
 
 fun FirElement.findPsi(project: Project): PsiElement? =
     getAllowedPsi() ?: FirIdeDeserializedDeclarationSourceProvider.findPsi(this, project)
+
+
+fun FirBasedSymbol<*>.findPsi(): PsiElement? =
+    fir.findPsi(fir.moduleData.session)
 
 fun FirElement.findPsi(session: FirSession): PsiElement? =
     findPsi((session as FirIdeSession).project)

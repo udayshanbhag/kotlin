@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.analysis.api.fir.scopes
 
-import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
 import org.jetbrains.kotlin.analysis.api.ValidityTokenOwner
 import org.jetbrains.kotlin.analysis.api.scopes.KtDeclaredMemberScope
 import org.jetbrains.kotlin.analysis.api.scopes.KtMemberScope
@@ -14,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
+import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
 import org.jetbrains.kotlin.name.Name
 
 internal class KtFirEmptyMemberScope(override val owner: KtSymbolWithMembers) : KtMemberScope, KtDeclaredMemberScope, ValidityTokenOwner {

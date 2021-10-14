@@ -30,6 +30,9 @@ open class FirPropertySymbol(
     val setterSymbol: FirPropertyAccessorSymbol?
         get() = fir.setter?.symbol
 
+    val backingFieldSymbol: FirBackingFieldSymbol?
+        get() = fir.backingField?.symbol
+
     val hasInitializer: Boolean
         get() = fir.initializer != null
 

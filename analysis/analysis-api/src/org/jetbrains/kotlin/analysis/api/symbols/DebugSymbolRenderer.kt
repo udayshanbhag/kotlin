@@ -109,7 +109,7 @@ public object DebugSymbolRenderer {
         else -> value::class.simpleName!!
     }
 
-    private val ignoredPropertyNames = setOf("firRef", "psi", "token", "builder")
+    private val ignoredPropertyNames = setOf("psi", "token", "builder", "resolveState", "firSymbol")
 
     private const val INDENT = 2
 }

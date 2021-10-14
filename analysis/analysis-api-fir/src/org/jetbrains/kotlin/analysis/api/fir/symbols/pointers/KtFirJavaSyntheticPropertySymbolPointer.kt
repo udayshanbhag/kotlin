@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
+import org.jetbrains.kotlin.fir.resolve.calls.FirSyntheticPropertySymbol
 import org.jetbrains.kotlin.fir.scopes.FirScope
 import org.jetbrains.kotlin.fir.scopes.getProperties
 import org.jetbrains.kotlin.name.ClassId
@@ -28,6 +29,6 @@ internal class KtFirJavaSyntheticPropertySymbolPointer(
                 .singleOrNull()
                 ?: return null
 
-        return firSymbolBuilder.variableLikeBuilder.buildSyntheticJavaPropertySymbol(syntheticProperty)
+        return firSymbolBuilder.variableLikeBuilder.buildSyntheticJavaPropertySymbol(syntheticProperty.symbol as FirSyntheticPropertySymbol)
     }
 }

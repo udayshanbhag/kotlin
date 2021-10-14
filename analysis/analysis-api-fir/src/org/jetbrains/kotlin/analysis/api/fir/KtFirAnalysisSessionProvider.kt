@@ -11,14 +11,16 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.FirModuleResolveState
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getResolveState
 import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KtFirSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
 import org.jetbrains.kotlin.analysis.api.tokens.ValidityTokenFactory
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.FirModuleResolveState
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getResolveState
+import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.FirIdeSession
+import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
+import org.jetbrains.kotlin.fir.resolve.firProvider
 import org.jetbrains.kotlin.psi.KtElement
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
@@ -39,7 +41,7 @@ class KtFirAnalysisSessionProvider(private val project: Project) : KtAnalysisSes
 
     override fun getAnalysisSessionBySymbol(contextSymbol: KtSymbol): KtAnalysisSession {
         require(contextSymbol is KtFirSymbol<*>)
-        val resolveState = contextSymbol.firRef.resolveState
+        val resolveState = contextSymbol.resolveState
         val token = contextSymbol.token
         return getCachedAnalysisSession(resolveState, token)
             ?: error("analysis session was not found for ${contextSymbol::class}, symbol.isValid=${contextSymbol.isValid()}")

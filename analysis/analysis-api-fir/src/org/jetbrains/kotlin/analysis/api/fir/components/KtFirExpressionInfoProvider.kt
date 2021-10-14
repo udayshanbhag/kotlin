@@ -5,15 +5,15 @@
 
 package org.jetbrains.kotlin.analysis.api.fir.components
 
-import org.jetbrains.kotlin.diagnostics.WhenMissingCase
-import org.jetbrains.kotlin.fir.expressions.FirReturnExpression
-import org.jetbrains.kotlin.fir.expressions.FirWhenExpression
-import org.jetbrains.kotlin.fir.resolve.transformers.FirWhenExhaustivenessTransformer
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirSafe
 import org.jetbrains.kotlin.analysis.api.components.KtExpressionInfoProvider
 import org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirSafe
+import org.jetbrains.kotlin.diagnostics.WhenMissingCase
+import org.jetbrains.kotlin.fir.expressions.FirReturnExpression
+import org.jetbrains.kotlin.fir.expressions.FirWhenExpression
+import org.jetbrains.kotlin.fir.resolve.transformers.FirWhenExhaustivenessTransformer
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
@@ -24,7 +24,7 @@ internal class KtFirExpressionInfoProvider(
     override fun getReturnExpressionTargetSymbol(returnExpression: KtReturnExpression): KtCallableSymbol? {
         val fir = returnExpression.getOrBuildFirSafe<FirReturnExpression>(firResolveState) ?: return null
         val firTargetSymbol = fir.target.labeledElement
-        return firSymbolBuilder.callableBuilder.buildCallableSymbol(firTargetSymbol)
+        return firSymbolBuilder.callableBuilder.buildCallableSymbol(firTargetSymbol.symbol)
     }
 
     override fun getWhenMissingCases(whenExpression: KtWhenExpression): List<WhenMissingCase> {

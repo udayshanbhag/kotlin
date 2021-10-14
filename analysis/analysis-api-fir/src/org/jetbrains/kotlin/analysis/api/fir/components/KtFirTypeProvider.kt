@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.expressions.FirCallableReferenceAccess
 import org.jetbrains.kotlin.fir.expressions.FirDelegatedConstructorCall
 import org.jetbrains.kotlin.fir.expressions.FirGetClassCall
+import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.fir.typeContext
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
@@ -54,13 +55,14 @@ internal class KtFirTypeProvider(
 
     override fun buildSelfClassType(symbol: KtNamedClassOrObjectSymbol): KtType {
         require(symbol is KtFirNamedClassOrObjectSymbol)
-        val type = symbol.firRef.withFir(FirResolvePhase.SUPER_TYPES) { firClass ->
-            ConeClassLikeTypeImpl(
-                firClass.symbol.toLookupTag(),
-                firClass.typeParameters.map { ConeTypeParameterTypeImpl(it.symbol.toLookupTag(), isNullable = false) }.toTypedArray(),
-                isNullable = false
-            )
-        }
+        symbol.firSymbol.ensureResolved(FirResolvePhase.SUPER_TYPES)
+        val firClass = symbol.firSymbol.fir
+        val type = ConeClassLikeTypeImpl(
+            firClass.symbol.toLookupTag(),
+            firClass.typeParameters.map { ConeTypeParameterTypeImpl(it.symbol.toLookupTag(), isNullable = false) }.toTypedArray(),
+            isNullable = false
+        )
+
         return type.asKtType()
     }
 

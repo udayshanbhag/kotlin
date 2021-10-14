@@ -6,12 +6,6 @@
 package org.jetbrains.kotlin.analysis.api.fir.components
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.fir.FirFakeSourceElementKind
-import org.jetbrains.kotlin.fir.FirRealSourceElementKind
-import org.jetbrains.kotlin.fir.declarations.FirDeclaration
-import org.jetbrains.kotlin.fir.psi
-import org.jetbrains.kotlin.analysis.low.level.api.fir.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
 import org.jetbrains.kotlin.analysis.api.components.KtSymbolContainingDeclarationProvider
 import org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KtFirSymbol
@@ -19,7 +13,15 @@ import org.jetbrains.kotlin.analysis.api.fir.symbols.KtFirTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.parentOfType
+import org.jetbrains.kotlin.fir.FirFakeSourceElementKind
+import org.jetbrains.kotlin.fir.FirRealSourceElementKind
+import org.jetbrains.kotlin.fir.psi
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtProperty
 
 internal class KtFirSymbolContainingDeclarationProvider(
     override val analysisSession: KtFirAnalysisSession,
@@ -38,11 +40,10 @@ internal class KtFirSymbolContainingDeclarationProvider(
         }
         return when (symbol) {
             is KtFirTypeParameterSymbol -> {
-                symbol.firRef.withFir { fir ->
-                    fir.containingDeclarationSymbol?.fir?.let { containingDeclaration ->
-                        firSymbolBuilder.buildSymbol(containingDeclaration) as KtSymbolWithKind
-                    }
+                symbol.firSymbol.containingDeclarationSymbol?.let { containingDeclaration ->
+                    firSymbolBuilder.buildSymbol(containingDeclaration) as KtSymbolWithKind
                 }
+
             }
             is KtSymbolWithKind -> when (symbol.origin) {
                 KtSymbolOrigin.SOURCE, KtSymbolOrigin.SOURCE_MEMBER_GENERATED ->
@@ -77,7 +78,7 @@ internal class KtFirSymbolContainingDeclarationProvider(
     }
 
     private fun getContainingPsi(symbol: KtFirSymbol<*>): KtDeclaration {
-        val source = symbol.firRef.withFir(action = FirDeclaration::source)
+        val source = symbol.firSymbol.source
         val thisSource = when (source?.kind) {
             null -> error("PSI should present for declaration built by Kotlin code")
             FirFakeSourceElementKind.ImplicitConstructor ->

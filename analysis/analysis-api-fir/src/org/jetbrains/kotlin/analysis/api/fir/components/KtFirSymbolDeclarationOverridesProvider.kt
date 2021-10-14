@@ -5,18 +5,6 @@
 
 package org.jetbrains.kotlin.analysis.api.fir.components
 
-import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
-import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.declarations.utils.superConeTypes
-import org.jetbrains.kotlin.fir.java.declarations.FirJavaField
-import org.jetbrains.kotlin.fir.resolve.ScopeSession
-import org.jetbrains.kotlin.fir.scopes.*
-import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
-import org.jetbrains.kotlin.fir.symbols.ensureResolved
-import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirIntersectionOverrideFunctionSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirIntersectionOverridePropertySymbol
-import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.ResolveType
 import org.jetbrains.kotlin.analysis.api.components.KtSymbolDeclarationOverridesProvider
 import org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KtFirAnonymousObjectSymbol
@@ -27,6 +15,17 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
+import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
+import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.superConeTypes
+import org.jetbrains.kotlin.fir.resolve.ScopeSession
+import org.jetbrains.kotlin.fir.scopes.*
+import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
+import org.jetbrains.kotlin.fir.symbols.ensureResolved
+import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirIntersectionOverrideFunctionSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirIntersectionOverridePropertySymbol
 
 internal class KtFirSymbolDeclarationOverridesProvider(
     override val analysisSession: KtFirAnalysisSession,
@@ -42,7 +41,7 @@ internal class KtFirSymbolDeclarationOverridesProvider(
                 overriddenDeclaration.symbol.collectIntersectionOverridesSymbolsTo(overriddenElement)
             }
         }
-        return overriddenElement.map { analysisSession.firSymbolBuilder.callableBuilder.buildCallableSymbol(it.fir) }
+        return overriddenElement.map { analysisSession.firSymbolBuilder.callableBuilder.buildCallableSymbol(it) }
     }
 
     override fun <T : KtSymbol> getDirectlyOverriddenSymbols(callableSymbol: T): List<KtCallableSymbol> {
@@ -52,7 +51,7 @@ internal class KtFirSymbolDeclarationOverridesProvider(
                 overriddenDeclaration.symbol.collectIntersectionOverridesSymbolsTo(overriddenElement)
             }
         }
-        return overriddenElement.map { analysisSession.firSymbolBuilder.callableBuilder.buildCallableSymbol(it.fir) }
+        return overriddenElement.map { analysisSession.firSymbolBuilder.callableBuilder.buildCallableSymbol(it) }
     }
 
     private fun FirTypeScope.processCallableByName(declaration: FirDeclaration) = when (declaration) {
@@ -107,21 +106,21 @@ internal class KtFirSymbolDeclarationOverridesProvider(
     }
 
     private inline fun processOverrides(
-        containingDeclaration: KtFirSymbol<FirClass>,
+        containingDeclaration: KtFirSymbol<FirClassSymbol<*>>,
         callableSymbol: KtFirSymbol<*>,
         crossinline process: (FirTypeScope, FirDeclaration) -> Unit
     ) {
-        containingDeclaration.firRef.withFir(FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE) { firContainer ->
-            callableSymbol.firRef.withFirUnsafe { firCallableDeclaration ->
-                val firTypeScope = firContainer.unsubstitutedScope(
-                    firContainer.moduleData.session,
-                    ScopeSession(),
-                    withForcedTypeCalculator = false
-                )
-                firTypeScope.processCallableByName(firCallableDeclaration)
-                process(firTypeScope, firCallableDeclaration)
-            }
-        }
+        containingDeclaration.firSymbol.ensureResolved(FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE)
+        val firContainer = containingDeclaration.firSymbol.fir
+        val firCallableDeclaration = callableSymbol.firSymbol.fir
+
+        val firTypeScope = firContainer.unsubstitutedScope(
+            firContainer.moduleData.session,
+            ScopeSession(),
+            withForcedTypeCalculator = false
+        )
+        firTypeScope.processCallableByName(firCallableDeclaration)
+        process(firTypeScope, firCallableDeclaration)
     }
 
     private fun FirCallableSymbol<*>.collectIntersectionOverridesSymbolsTo(to: MutableCollection<FirCallableSymbol<*>>) {
@@ -151,13 +150,14 @@ internal class KtFirSymbolDeclarationOverridesProvider(
         require(superClass is KtFirSymbol<*>)
 
         if (subClass == superClass) return false
-        return subClass.firRef.withFirByType(ResolveType.ClassSuperTypes) { subClassFir ->
-            check(subClassFir is FirRegularClass)
-            superClass.firRef.withFir { superClassFir ->
-                check(superClassFir is FirRegularClass)
-                isSubClassOf(subClassFir, superClassFir, checkDeep)
-            }
-        }
+        subClass.firSymbol.ensureResolved(FirResolvePhase.SUPER_TYPES)
+        return isSubClassOf(
+            subClass = subClass.firSymbol.fir as FirRegularClass,
+            superClass = superClass.firSymbol.fir as FirRegularClass,
+            checkDeep
+        )
+
+
     }
 
     private fun isSubClassOf(subClass: FirRegularClass, superClass: FirRegularClass, checkDeep: Boolean): Boolean {
@@ -174,11 +174,10 @@ internal class KtFirSymbolDeclarationOverridesProvider(
     override fun getIntersectionOverriddenSymbols(symbol: KtCallableSymbol): Collection<KtCallableSymbol> {
         require(symbol is KtFirSymbol<*>)
         if (symbol.origin != KtSymbolOrigin.INTERSECTION_OVERRIDE) return emptyList()
-        return symbol.firRef.withFir { fir ->
-            val firSymbol = fir.symbol
-            firSymbol.getIntersectionOverriddenSymbols()
-                .map { analysisSession.firSymbolBuilder.callableBuilder.buildCallableSymbol(it.fir) }
-        }
+        return symbol.firSymbol
+            .getIntersectionOverriddenSymbols()
+            .map { analysisSession.firSymbolBuilder.callableBuilder.buildCallableSymbol(it) }
+
     }
 
     private fun FirBasedSymbol<*>.getIntersectionOverriddenSymbols(): Collection<FirCallableSymbol<*>> {

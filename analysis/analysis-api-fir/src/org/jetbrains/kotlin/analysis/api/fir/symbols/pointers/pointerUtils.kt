@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.analysis.api.fir.symbols.pointers
 
+import org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.ideSessionComponents
 import org.jetbrains.kotlin.fir.FirRenderer
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
@@ -13,8 +15,6 @@ import org.jetbrains.kotlin.fir.resolve.symbolProvider
 import org.jetbrains.kotlin.fir.scopes.FirScope
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
-import org.jetbrains.kotlin.analysis.low.level.api.fir.ideSessionComponents
-import org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSession
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.name.ClassId
 
@@ -47,6 +47,9 @@ internal inline fun <reified D : FirDeclaration> Collection<FirCallableSymbol<*>
     }
     return null
 }
+
+internal fun FirBasedSymbol<*>.createSignature(): IdSignature =
+    fir.createSignature()
 
 internal fun FirDeclaration.createSignature(): IdSignature {
     val signatureComposer = moduleData.session.ideSessionComponents.signatureComposer

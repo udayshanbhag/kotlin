@@ -5,97 +5,95 @@
 
 package org.jetbrains.kotlin.analysis.api.fir.symbols
 
-import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.resolve.transformers.resolveSupertypesInTheAir
-import org.jetbrains.kotlin.fir.types.ConeKotlinType
-import org.jetbrains.kotlin.fir.types.FirTypeRef
-import org.jetbrains.kotlin.fir.types.coneType
-import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.ResolveType
 import org.jetbrains.kotlin.analysis.api.fir.KtSymbolByFirBuilder
 import org.jetbrains.kotlin.analysis.api.fir.symbols.annotations.KtFirAnnotationCall
-import org.jetbrains.kotlin.analysis.api.fir.utils.FirRefWithValidityCheck
 import org.jetbrains.kotlin.analysis.api.fir.utils.cached
-import org.jetbrains.kotlin.analysis.api.fir.utils.weakRef
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotationCall
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtTypeAndAnnotations
 import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.withValidityAssertion
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.FirModuleResolveState
+import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
+import org.jetbrains.kotlin.fir.resolve.transformers.resolveSupertypesInTheAir
+import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
+import org.jetbrains.kotlin.fir.types.ConeKotlinType
+import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
+import org.jetbrains.kotlin.fir.types.FirTypeRef
+import org.jetbrains.kotlin.fir.types.coneType
 
-internal class KtFirTypeAndAnnotations<T : FirDeclaration>(
-    private val containingDeclaration: FirRefWithValidityCheck<T>,
-    @Suppress("UNUSED_PARAMETER") typeResolvePhase: FirResolvePhase,
+internal class KtFirLazyTypeAndAnnotations(
+    private val typeRef: FirResolvedTypeRef,
+    private val containingDeclaration: FirCallableSymbol<*>,
     private val builder: KtSymbolByFirBuilder,
-    private val typeRef: (T) -> FirTypeRef,
+    override val token: ValidityToken,
 ) : KtTypeAndAnnotations() {
 
-    override val token: ValidityToken get() = containingDeclaration.token
+    override val type: KtType by cached { builder.typeBuilder.buildKtType(typeRef) }
 
-    override val type: KtType by containingDeclaration.withFirAndCache(ResolveType.CallableReturnType) { fir ->
-        builder.typeBuilder.buildKtType(typeRef(fir))
-    }
-
-    override val annotations: List<KtAnnotationCall> by containingDeclaration.withFirAndCache { fir ->
-        typeRef(fir).annotations.map {
-            KtFirAnnotationCall(containingDeclaration, it)
+    override val annotations: List<KtAnnotationCall> by cached {
+        typeRef.annotations.map {
+            KtFirAnnotationCall(containingDeclaration, it, token)
         }
     }
 }
 
-internal class KtSimpleFirTypeAndAnnotations(
+
+internal class KtFirTypeAndAnnotations(
     private val coneType: ConeKotlinType,
     private val _annotations: List<KtAnnotationCall>,
     private val builder: KtSymbolByFirBuilder,
     override val token: ValidityToken
 ) : KtTypeAndAnnotations() {
-    override val type: KtType by cached {
-        builder.typeBuilder.buildKtType(coneType)
-    }
+    override val type: KtType by cached { builder.typeBuilder.buildKtType(coneType) }
 
     override val annotations: List<KtAnnotationCall> get() = withValidityAssertion { _annotations }
 }
 
-internal fun FirRefWithValidityCheck<FirClass>.superTypesAndAnnotationsList(builder: KtSymbolByFirBuilder): List<KtTypeAndAnnotations> =
-    withFir(FirResolvePhase.SUPER_TYPES) { fir ->
-        fir.superTypeRefs.mapToTypeAndAnnotations(this, builder)
-    }
+internal fun FirCallableSymbol<*>.returnTypeAnnotated(
+    builder: KtSymbolByFirBuilder,
+    token: ValidityToken
+): KtTypeAndAnnotations {
+    return KtFirLazyTypeAndAnnotations(resolvedReturnTypeRef, this, builder, token)
+}
 
-internal fun FirRefWithValidityCheck<FirRegularClass>.superTypesAndAnnotationsListForRegularClass(builder: KtSymbolByFirBuilder): List<KtTypeAndAnnotations> {
-    return withFir { fir ->
-        if (fir.resolvePhase >= FirResolvePhase.SUPER_TYPES) {
-            fir.superTypeRefs.mapToTypeAndAnnotations(this, builder)
-        } else null
-    } ?: withFirByType(ResolveType.NoResolve) { fir ->
-        fir.resolveSupertypesInTheAir(builder.rootSession).mapToTypeAndAnnotations(this, builder)
+internal fun FirCallableSymbol<*>.receiverTypeAnnotated(
+    builder: KtSymbolByFirBuilder,
+    token: ValidityToken
+): KtTypeAndAnnotations? {
+    return resolvedReceiverTypeRef?.let { receiver ->
+        return KtFirLazyTypeAndAnnotations(receiver, this, builder, token)
     }
+}
+
+
+internal fun FirClassSymbol<*>.superTypesAndAnnotationsList(
+    builder: KtSymbolByFirBuilder,
+    token: ValidityToken
+): List<KtTypeAndAnnotations> =
+    resolvedSuperTypeRefs.mapToTypeAndAnnotations(this, builder, token)
+
+
+internal fun FirRegularClassSymbol.superTypesAndAnnotationsListForRegularClass(
+    builder: KtSymbolByFirBuilder,
+    token: ValidityToken
+): List<KtTypeAndAnnotations> {
+    val annotations =
+        if (fir.resolvePhase >= FirResolvePhase.SUPER_TYPES) fir.superTypeRefs
+        else fir.resolveSupertypesInTheAir(builder.rootSession)
+    return annotations.mapToTypeAndAnnotations(this, builder, token)
+
 }
 
 private fun List<FirTypeRef>.mapToTypeAndAnnotations(
-    containingDeclaration: FirRefWithValidityCheck<FirClass>,
+    containingDeclaration: FirClassSymbol<*>,
     builder: KtSymbolByFirBuilder,
-) = map { typeRef ->
+    token: ValidityToken,
+): List<KtFirTypeAndAnnotations> = map { typeRef ->
     val annotations = typeRef.annotations.map { annotation ->
-        KtFirAnnotationCall(containingDeclaration, annotation)
+        KtFirAnnotationCall(containingDeclaration, annotation, token)
     }
-    KtSimpleFirTypeAndAnnotations(typeRef.coneType, annotations, builder, containingDeclaration.token)
+    KtFirTypeAndAnnotations(typeRef.coneType, annotations, builder, token)
 }
-
-internal fun FirRefWithValidityCheck<FirTypedDeclaration>.returnTypeAndAnnotations(
-    typeResolvePhase: FirResolvePhase,
-    builder: KtSymbolByFirBuilder
-) = KtFirTypeAndAnnotations(this, typeResolvePhase, builder) { it.returnTypeRef }
-
-internal fun FirRefWithValidityCheck<FirCallableDeclaration>.receiverTypeAndAnnotations(builder: KtSymbolByFirBuilder) = withFir { fir ->
-    fir.receiverTypeRef?.let { _ ->
-        KtFirTypeAndAnnotations(this, FirResolvePhase.TYPES, builder) {
-            it.receiverTypeRef ?: error { "Receiver expected for callable declaration but it is null" }
-        }
-    }
-}
-
-internal fun FirRefWithValidityCheck<FirCallableDeclaration>.dispatchReceiverTypeAndAnnotations(builder: KtSymbolByFirBuilder) =
-    withFir { fir ->
-        fir.dispatchReceiverType?.let {
-            builder.typeBuilder.buildKtType(it)
-        }
-    }
