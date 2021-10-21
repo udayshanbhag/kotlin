@@ -229,9 +229,12 @@ fun createFunctionType(
     val classDescriptor = getFunctionDescriptor(builtIns, parameterCount, suspendFunction)
 
     // TODO: preserve laziness of given annotations
-    val typeAnnotations = if (receiverType != null) annotations.withExtensionFunctionAnnotation(builtIns) else annotations
+    val typeAnnotations = if (receiverType != null)
+        annotations.withExtensionFunctionAnnotation(builtIns)
+    else
+        annotations
 
-    return KotlinTypeFactory.simpleNotNullType(typeAnnotations, classDescriptor, arguments)
+    return KotlinTypeFactory.simpleNotNullType(typeAnnotations.toDefaultAttributes(), classDescriptor, arguments)
 }
 
 fun Annotations.hasExtensionFunctionAnnotation() = hasAnnotation(StandardNames.FqNames.extensionFunctionType)
