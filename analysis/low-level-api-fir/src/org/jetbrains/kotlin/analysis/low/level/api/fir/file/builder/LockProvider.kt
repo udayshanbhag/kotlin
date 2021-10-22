@@ -5,33 +5,38 @@
 
 package org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder
 
+import com.google.common.collect.MapMaker
+import com.google.common.util.concurrent.CycleDetectingLockFactory
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.analysis.low.level.api.fir.annotations.PrivateForInline
 import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.ResolveTreeBuilder
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.lockWithPCECheck
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-/**
- * Keyed locks provider.
- * !!! We temporary remove its correct implementation to fix deadlocks problem. Do not use this until this comment is present
- */
+
 internal class LockProvider<KEY> {
-    //We temporary disable multi-locks to fix deadlocks problem
-    private val globalLock = ReentrantLock()
+    private val locks: ConcurrentMap<KEY, ReentrantLock> = MapMaker().weakKeys().makeMap()
 
-    @OptIn(PrivateForInline::class)
-    inline fun <R> withWriteLock(@Suppress("UNUSED_PARAMETER") key: KEY, action: () -> R): R {
-        val startTime = System.currentTimeMillis()
-        return globalLock.withLock { ResolveTreeBuilder.lockNode(startTime, action) }
+    @Suppress("UnstableApiUsage")
+    private val lockFactory = CycleDetectingLockFactory.newInstance(CycleDetectingLockFactory.Policies.THROW)
+
+    @Suppress("NOTHING_TO_INLINE")
+    private inline fun getLockFor(key: KEY) = locks.getOrPut(key) {
+        val file = key as FirFile
+        val name = "${file.packageDirective.packageFqName.asString()}.${file.name}"
+        @Suppress("UnstableApiUsage")
+        lockFactory.newReentrantLock(name)
     }
 
+    @OptIn(PrivateForInline::class)
+    inline fun <R> withWriteLock(key: KEY, action: () -> R): R =
+        getLockFor(key).withLock(action)
 
     @OptIn(PrivateForInline::class)
-    inline fun <R> withWriteLockPCECheck(@Suppress("UNUSED_PARAMETER") key: KEY, lockingIntervalMs: Long, action: () -> R): R {
-        val startTime = System.currentTimeMillis()
-        return globalLock.lockWithPCECheck(lockingIntervalMs) { ResolveTreeBuilder.lockNode(startTime, action) }
-    }
+    inline fun <R> withWriteLockPCECheck(key: KEY, lockingIntervalMs: Long, action: () -> R): R =
+        getLockFor(key).lockWithPCECheck(lockingIntervalMs, action)
 }
 
 /**
