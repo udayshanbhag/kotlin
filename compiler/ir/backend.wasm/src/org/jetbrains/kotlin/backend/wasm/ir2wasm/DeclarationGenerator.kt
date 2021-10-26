@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
+import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.wasm.ir.*
 
 class DeclarationGenerator(val context: WasmModuleCodegenContext) : IrElementVisitorVoid {
@@ -285,6 +286,19 @@ class DeclarationGenerator(val context: WasmModuleCodegenContext) : IrElementVis
 
     private fun binaryDataStruct(classMetadata: ClassMetadata): ConstantDataStruct {
         val invalidIndex = -1
+
+        val packageName = classMetadata.klass.kotlinFqName.parentOrNull()?.asString() ?: ""
+        val simpleName = classMetadata.klass.kotlinFqName.shortName().asString()
+        val typeInfo = ConstantDataStruct(
+            "TypeInfo",
+            listOf(
+                ConstantDataIntField("TypePackageNameLength", packageName.length),
+                ConstantDataIntField("TypePackageNamePtr", context.referenceStringLiteral(packageName)),
+                ConstantDataIntField("TypeNameLength", simpleName.length),
+                ConstantDataIntField("TypeNamePtr", context.referenceStringLiteral(simpleName))
+            )
+        )
+
         val vtableSizeField = ConstantDataIntField(
             "V-table length",
             classMetadata.virtualMethods.size
@@ -309,6 +323,7 @@ class DeclarationGenerator(val context: WasmModuleCodegenContext) : IrElementVis
         return ConstantDataStruct(
             "Class TypeInfo: ${classMetadata.klass.fqNameWhenAvailable} ",
             listOf(
+                typeInfo,
                 interfaceTablePtr,
                 vtableSizeField,
                 vtableArray,

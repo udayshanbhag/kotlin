@@ -44,6 +44,10 @@ class WasmSymbols(
     private val kotlinTestPackage: PackageViewDescriptor =
         context.module.getPackage(FqName("kotlin.test"))
 
+    val jsGetKClass: IrSimpleFunctionSymbol = getInternalFunction("getKClass")
+    val jsGetKClassFromExpression: IrSimpleFunctionSymbol = getInternalFunction("getKClassFromExpression")
+    val jsClass: IrSimpleFunctionSymbol = getInternalFunction("wasmGetTypeInfoData")
+
     override val throwNullPointerException = getInternalFunction("THROW_NPE")
     override val throwISE = getInternalFunction("THROW_ISE")
     override val throwTypeCastException = getInternalFunction("THROW_CCE")
@@ -144,6 +148,8 @@ class WasmSymbols(
 
     val wasmClassId = getInternalFunction("wasmClassId")
     val wasmInterfaceId = getInternalFunction("wasmInterfaceId")
+    val wasmTypeId = getInternalFunction("wasmTypeId")
+    val wasmTypeInfoData = getInternalClass("TypeInfoData")
 
     val getVirtualMethodId = getInternalFunction("getVirtualMethodId")
     val getInterfaceImplId = getInternalFunction("getInterfaceImplId")

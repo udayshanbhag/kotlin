@@ -1,14 +1,15 @@
-data class A(val a: Foo<String>) {}
+interface X
 
-class Foo<T>(val a: T) { }
+class Y : X
 
 fun box() : String {
-    val f1 = Foo("a")
-    val f2 = Foo("b")
-    val a = A(f1)
-    val b = a.copy(f2)
-    if (b.a.a == "b") {
+
+    val x = X::class
+    val y = Y()
+
+    if (x.isInstance(y)) {
         return "OK"
     }
+
     return "fail"
 }

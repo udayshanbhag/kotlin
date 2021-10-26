@@ -11,8 +11,11 @@ import org.jetbrains.kotlin.backend.common.ir.addChild
 import org.jetbrains.kotlin.backend.wasm.lower.WasmSharedVariablesManager
 import org.jetbrains.kotlin.backend.wasm.utils.WasmInlineClassesUtils
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.impl.EmptyPackageFragmentDescriptor
+import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.ir.*
 import org.jetbrains.kotlin.ir.backend.js.*
 import org.jetbrains.kotlin.ir.backend.js.ir.JsIrBuilder
@@ -22,19 +25,47 @@ import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrExternalPackageFragmentImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrFileImpl
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.impl.DescriptorlessExternalPackageFragmentSymbol
+import org.jetbrains.kotlin.ir.types.IrDynamicType
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContext
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
 import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.resolve.scopes.MemberScope
+
+class WasmIntrinsics(private val context: WasmBackendContext) : JsIntrinsicsCommon {
+
+    override val jsGetKClass: IrSimpleFunctionSymbol get() = context.wasmSymbols.jsGetKClass
+    override val jsGetKClassFromExpression: IrSimpleFunctionSymbol get() = context.wasmSymbols.jsGetKClassFromExpression
+    override val jsClass: IrSimpleFunctionSymbol get() = context.wasmSymbols.jsClass
+
+    override val createKType: IrSimpleFunctionSymbol?
+        get() = TODO("Not yet implemented")
+    override val createDynamicKType: IrSimpleFunctionSymbol?
+        get() = TODO("Not yet implemented")
+    override val createKTypeParameter: IrSimpleFunctionSymbol?
+        get() = TODO("Not yet implemented")
+    override val getStarKTypeProjection: IrSimpleFunctionSymbol?
+        get() = TODO("Not yet implemented")
+    override val createCovariantKTypeProjection: IrSimpleFunctionSymbol?
+        get() = TODO("Not yet implemented")
+    override val createInvariantKTypeProjection: IrSimpleFunctionSymbol?
+        get() = TODO("Not yet implemented")
+    override val createContravariantKTypeProjection: IrSimpleFunctionSymbol?
+        get() = TODO("Not yet implemented")
+    override val arrayLiteral: IrSimpleFunctionSymbol
+        get() = TODO("Not yet implemented")
+
+}
 
 class WasmBackendContext(
     val module: ModuleDescriptor,
     override val irBuiltIns: IrBuiltIns,
-    symbolTable: SymbolTable,
-    irModuleFragment: IrModuleFragment,
+    val symbolTable: SymbolTable,
+    val irModuleFragment: IrModuleFragment,
     val additionalExportedDeclarations: Set<FqName>,
     override val configuration: CompilerConfiguration,
 ) : JsCommonBackendContext {
@@ -43,6 +74,30 @@ class WasmBackendContext(
     override var inVerbosePhase: Boolean = false
     override val scriptMode = false
     override val irFactory: IrFactory = symbolTable.irFactory
+
+    override val dynamicType: IrDynamicType get() = TODO()
+
+    //TODO!!!
+    companion object {
+        private val WASM_PACKAGE_FQNAME = JsIrBackendContext.KOTLIN_PACKAGE_FQN.child(Name.identifier("wasm"))
+    }
+
+    val internalPackage = module.getPackage(WASM_PACKAGE_FQNAME)
+
+    internal fun getWasmInternalFunction(name: String): SimpleFunctionDescriptor =
+        findFunctions(internalPackage.memberScope, Name.identifier(name)).singleOrNull() ?: error("Internal function '$name' not found")
+
+    fun getFunctions(fqName: FqName): List<SimpleFunctionDescriptor> =
+        findFunctions(module.getPackage(fqName.parent()).memberScope, fqName.shortName())
+
+    internal fun findClass(memberScope: MemberScope, name: Name): ClassDescriptor =
+        memberScope.getContributedClassifier(name, NoLookupLocation.FROM_BACKEND) as ClassDescriptor
+
+    internal fun getClass(fqName: FqName): ClassDescriptor =
+        findClass(module.getPackage(fqName.parent()).memberScope, fqName.shortName())
+
+    override val primitiveClassesObject = symbolTable.referenceClass(getClass(FqName("kotlin.reflect.wasm.internal.PrimitiveClasses")))
+    //TODO!!!
 
     // Place to store declarations excluded from code generation
     private val excludedDeclarations = mutableMapOf<FqName, IrPackageFragment>()
@@ -170,4 +225,6 @@ class WasmBackendContext(
             }
         }
     }
+
+    override val intrinsics: JsIntrinsicsCommon = WasmIntrinsics(this)
 }

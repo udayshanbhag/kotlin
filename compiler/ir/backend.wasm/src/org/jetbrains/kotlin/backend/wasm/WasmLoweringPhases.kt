@@ -393,6 +393,12 @@ private val staticMembersLoweringPhase = makeWasmModulePhase(
     description = "Move static member declarations to top-level"
 )
 
+private val classReferenceLoweringPhase = makeWasmModulePhase(
+    ::ClassReferenceLowering,
+    name = "ClassReferenceLowering",
+    description = "Handle class references"
+)
+
 private val wasmVarargExpressionLoweringPhase = makeWasmModulePhase(
     ::WasmVarargExpressionLowering,
     name = "WasmVarargExpressionLowering",
@@ -545,7 +551,7 @@ val wasmPhases = NamedCompilerPhase(
 
 //            TODO:
 //            multipleCatchesLoweringPhase then
-//            classReferenceLoweringPhase then
+            classReferenceLoweringPhase then
 
             wasmVarargExpressionLoweringPhase then
             inlineClassDeclarationLoweringPhase then

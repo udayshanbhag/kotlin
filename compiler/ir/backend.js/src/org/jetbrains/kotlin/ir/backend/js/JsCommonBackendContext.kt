@@ -17,21 +17,31 @@ import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.ir.backend.js.utils.isDispatchReceiver
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.ir.types.IrDynamicType
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.impl.IrDynamicTypeImpl
 import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.getPropertySetter
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
+import org.jetbrains.kotlin.types.Variance
 
 interface JsCommonBackendContext : CommonBackendContext {
     override val mapping: JsMapping
 
+    val intrinsics: JsIntrinsicsCommon
+
+    val dynamicType: IrDynamicType
+
     val inlineClassesUtils: InlineClassesUtils
 
     val coroutineSymbols: JsCommonCoroutineSymbols
+
+    val primitiveClassesObject: IrClassSymbol
 
     val catchAllThrowableType: IrType
         get() = irBuiltIns.throwableType
@@ -50,7 +60,7 @@ internal fun <T> BackendContext.lazy2(fn: () -> T) = lazy { irFactory.stageContr
 
 class JsCommonCoroutineSymbols(
     symbolTable: SymbolTable,
-    module: ModuleDescriptor,
+    val module: ModuleDescriptor,
     val context: JsCommonBackendContext
 ) {
     val coroutinePackage = module.getPackage(COROUTINE_PACKAGE_FQNAME)
@@ -114,10 +124,10 @@ class JsCommonCoroutineSymbols(
     }
 }
 
-internal fun findClass(memberScope: MemberScope, name: Name): ClassDescriptor =
+fun findClass(memberScope: MemberScope, name: Name): ClassDescriptor =
     memberScope.getContributedClassifier(name, NoLookupLocation.FROM_BACKEND) as ClassDescriptor
 
-internal fun findFunctions(memberScope: MemberScope, name: Name): List<SimpleFunctionDescriptor> =
+fun findFunctions(memberScope: MemberScope, name: Name): List<SimpleFunctionDescriptor> =
     memberScope.getContributedFunctions(name, NoLookupLocation.FROM_BACKEND).toList()
 
 interface InlineClassesUtils {
