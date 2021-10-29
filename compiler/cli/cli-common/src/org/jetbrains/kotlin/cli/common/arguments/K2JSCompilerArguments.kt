@@ -7,7 +7,10 @@ package org.jetbrains.kotlin.cli.common.arguments
 
 import org.jetbrains.kotlin.cli.common.arguments.K2JsArgumentConstants.*
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
+import org.jetbrains.kotlin.config.AnalysisFlag
+import org.jetbrains.kotlin.config.AnalysisFlags.prohibitFullQualityNameInKClass
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersion
 
 class K2JSCompilerArguments : CommonCompilerArguments() {
     companion object {
@@ -234,6 +237,12 @@ class K2JSCompilerArguments : CommonCompilerArguments() {
 
     @Argument(value = "-Xwasm-debug-info", description = "Add debug info to WebAssembly compiled module")
     var wasmDebug: Boolean by FreezableVar(false)
+
+    override fun configureAnalysisFlags(collector: MessageCollector, languageVersion: LanguageVersion): MutableMap<AnalysisFlag<*>, Any> {
+        return super.configureAnalysisFlags(collector, languageVersion).also {
+            it[prohibitFullQualityNameInKClass] = !wasm
+        }
+    }
 
     override fun configureLanguageFeatures(collector: MessageCollector): MutableMap<LanguageFeature, LanguageFeature.State> {
         return super.configureLanguageFeatures(collector).apply {
