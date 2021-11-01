@@ -9,9 +9,8 @@ package kotlin.wasm.internal
 import kotlin.reflect.*
 import kotlin.reflect.wasm.internal.*
 
-internal fun <T : Any> getKClass(typeInfoData: TypeInfoData): KClass<T> {
-    return getKClass(typeInfoData)
-}
+internal fun <T : Any> getKClass(typeInfoData: TypeInfoData): KClass<T> =
+    KClassImpl(typeInfoData)
 
 internal fun <T : Any> getKClassFromExpression(e: T): KClass<T> =
     when (e) {
