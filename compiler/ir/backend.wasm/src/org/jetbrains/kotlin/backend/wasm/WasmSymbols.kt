@@ -151,7 +151,6 @@ class WasmSymbols(
 
     val wasmClassId = getInternalFunction("wasmClassId")
     val wasmInterfaceId = getInternalFunction("wasmInterfaceId")
-    val wasmTypeId = getInternalFunction("wasmTypeId")
 
     val getVirtualMethodId = getInternalFunction("getVirtualMethodId")
     val getInterfaceImplId = getInternalFunction("getInterfaceImplId")

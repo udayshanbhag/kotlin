@@ -136,7 +136,8 @@ class BuiltInsLowering(val context: WasmBackendContext) : FileLoweringPass {
                 val typeName = fqName.shortName().asString()
 
                 return with(builder) {
-                    val typeId = irCall(symbols.wasmTypeId).also {
+                    val wasmIdGetter = if (type.isInterface()) symbols.wasmInterfaceId else symbols.wasmClassId
+                    val typeId = irCall(wasmIdGetter).also {
                         it.putTypeArgument(0, type)
                     }
 

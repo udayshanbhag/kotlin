@@ -84,7 +84,3 @@ internal fun <T> wasmInterfaceId(): Int =
 @ExcludedFromCodegen
 internal fun <T> wasmGetTypeInfoData(): TypeInfoData =
     implementedAsIntrinsic
-
-@ExcludedFromCodegen
-internal fun <T> wasmTypeId(): Int =
-    implementedAsIntrinsic
