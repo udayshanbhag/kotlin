@@ -32,8 +32,6 @@ internal fun <T : Any> getKClassFromExpression(e: T): KClass<T> =
         is DoubleArray -> PrimitiveClasses.doubleArrayClass
         is KClass<*> -> KClass::class
         is Array<*> -> PrimitiveClasses.arrayClass
-
-        is Function<*> -> PrimitiveClasses.functionClass(0) //TODO
         else -> getKClass(getTypeInfoTypeDataByPtr(e.typeInfo))
     } as KClass<T>
 
