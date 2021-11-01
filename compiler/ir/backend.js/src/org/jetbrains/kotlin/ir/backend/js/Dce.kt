@@ -415,7 +415,7 @@ fun usefulDeclarations(
                                     }
                             }
                         }
-                        context.intrinsics.getKClassFromExpression -> {
+                        context.reflectionSymbols.getKClassFromExpression -> {
                             val ref = expression.getTypeArgument(0)?.classOrNull ?: context.irBuiltIns.anyClass
                             referencedJsClassesFromExpressions += ref.owner
                         }

@@ -128,8 +128,8 @@ class BuiltInsLowering(val context: WasmBackendContext) : FileLoweringPass {
                 val newSymbol = irBuiltins.suspendFunctionN(arity).getSimpleFunction("invoke")!!
                 return irCall(call, newSymbol, argumentsAsReceivers = true)
             }
-            symbols.getTypeInfoData -> {
-                val infoDataCtor = symbols.wasmTypeInfoData.constructors.first()
+            symbols.reflectionSymbols.getClassData -> {
+                val infoDataCtor = symbols.reflectionSymbols.wasmTypeInfoData.constructors.first()
                 val type = call.getTypeArgument(0)!!
                 val isInterface = type.isInterface()
                 val fqName = type.classFqName!!
