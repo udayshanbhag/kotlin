@@ -158,7 +158,7 @@ class JsIrBackendContext(
     private val internalPackage = module.getPackage(JS_PACKAGE_FQNAME)
 
     override val dynamicType: IrDynamicType = IrDynamicTypeImpl(null, emptyList(), Variance.INVARIANT)
-    override val intrinsics = JsIntrinsics(irBuiltIns, this)
+    override val intrinsics: JsIntrinsics = JsIntrinsics(irBuiltIns, this)
 
     override val catchAllThrowableType: IrType
         get() = dynamicType

@@ -80,7 +80,7 @@ class ClassReferenceLowering(val context: JsCommonBackendContext) : BodyLowering
         if (primitiveKClass != null)
             return JsIrBuilder.buildBlock(returnType, listOf(argument, primitiveKClass))
 
-        return JsIrBuilder.buildCall(context.intrinsics.jsGetKClassFromExpression, returnType, listOf(typeArgument)).apply {
+        return JsIrBuilder.buildCall(context.intrinsics.getKClassFromExpression, returnType, listOf(typeArgument)).apply {
             putValueArgument(0, argument)
         }
     }
@@ -118,7 +118,7 @@ class ClassReferenceLowering(val context: JsCommonBackendContext) : BodyLowering
     }
 
     private fun callGetKClass(
-        returnType: IrType = context.intrinsics.jsGetKClass.owner.returnType,
+        returnType: IrType = context.intrinsics.getKClass.owner.returnType,
         typeArgument: IrType
     ): IrCall {
         val primitiveKClass =
@@ -127,15 +127,15 @@ class ClassReferenceLowering(val context: JsCommonBackendContext) : BodyLowering
         if (primitiveKClass != null)
             return primitiveKClass
 
-        return JsIrBuilder.buildCall(context.intrinsics.jsGetKClass, returnType, listOf(typeArgument))
+        return JsIrBuilder.buildCall(context.intrinsics.getKClass, returnType, listOf(typeArgument))
             .apply {
-                putValueArgument(0, callJsClass(typeArgument))
+                putValueArgument(0, callGetClassByType(typeArgument))
             }
     }
 
-    private fun callJsClass(type: IrType) =
+    private fun callGetClassByType(type: IrType) =
         JsIrBuilder.buildCall(
-            context.intrinsics.jsClass,
+            context.intrinsics.getClassData,
             typeArguments = listOf(type),
             origin = JsLoweredDeclarationOrigin.CLASS_REFERENCE
         )

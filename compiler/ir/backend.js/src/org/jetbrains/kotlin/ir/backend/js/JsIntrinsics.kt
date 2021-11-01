@@ -22,9 +22,9 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import java.util.*
 
 interface Intrinsics {
-    val jsGetKClassFromExpression: IrSimpleFunctionSymbol
-    val jsGetKClass: IrSimpleFunctionSymbol
-    val jsClass: IrSimpleFunctionSymbol
+    val getKClassFromExpression: IrSimpleFunctionSymbol
+    val getKClass: IrSimpleFunctionSymbol
+    val getClassData: IrSimpleFunctionSymbol
     val createKType: IrSimpleFunctionSymbol?
     val createDynamicKType: IrSimpleFunctionSymbol?
     val createKTypeParameter: IrSimpleFunctionSymbol?
@@ -184,9 +184,10 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
     val jsInvokeSuspendSuperTypeWithReceiverAndParam =
         getInternalWithoutPackage("kotlin.coroutines.intrinsics.invokeSuspendSuperTypeWithReceiverAndParam")
 
-    override val jsGetKClass = getInternalWithoutPackage("getKClass")
-    override val jsGetKClassFromExpression = getInternalWithoutPackage("getKClassFromExpression")
-    override val jsClass = getInternalFunction("jsClassIntrinsic")
+    override val getKClass = getInternalWithoutPackage("getKClass")
+    override val getKClassFromExpression = getInternalWithoutPackage("getKClassFromExpression")
+    override val getClassData: IrSimpleFunctionSymbol get() = jsClass
+    val jsClass = getInternalFunction("jsClassIntrinsic")
 
     val jsNumberRangeToNumber = getInternalFunction("numberRangeToNumber")
     val jsNumberRangeToLong = getInternalFunction("numberRangeToLong")

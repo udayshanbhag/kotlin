@@ -6,8 +6,8 @@ package kotlin.reflect.wasm.internal
 
 import kotlin.reflect.*
 import kotlin.wasm.internal.TypeInfoData
-import kotlin.wasm.internal.getInterfaceImplId
 import kotlin.wasm.internal.getSuperTypeId
+import kotlin.wasm.internal.isInterface
 
 internal object NothingKClassImpl : KClass<Nothing> {
     override val simpleName: String = "Nothing"
@@ -45,11 +45,12 @@ internal class KClassImpl<T : Any>(private val typeData: TypeInfoData) : KClass<
         return false
     }
 
-    override fun isInstance(value: Any?): Boolean =
-        value != null && (checkSuperTypeInstance(value) || getInterfaceImplId(value, typeData.typeId) != -1)
+    override fun isInstance(value: Any?): Boolean = value?.let {
+        if (typeData.isInterface) isInterface(it, typeData.typeId) else checkSuperTypeInstance(it)
+    } ?: false
 
     override fun equals(other: Any?): Boolean =
-        (this === other) || (other is KClassImpl<*> && other.typeInfo == typeData.typeId)
+        (this === other) || (other is KClassImpl<*> && other.typeData.isInterface == typeData.isInterface && other.typeData.typeId == typeData.typeId)
 
     override fun hashCode(): Int = typeData.typeId
 }

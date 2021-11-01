@@ -45,9 +45,9 @@ class WasmSymbols(
     private val kotlinTestPackage: PackageViewDescriptor =
         context.module.getPackage(FqName("kotlin.test"))
 
-    val jsGetKClass: IrSimpleFunctionSymbol = getInternalFunction("getKClass")
-    val jsGetKClassFromExpression: IrSimpleFunctionSymbol = getInternalFunction("getKClassFromExpression")
-    val jsClass: IrSimpleFunctionSymbol = getInternalFunction("wasmGetTypeInfoData")
+    val getKClass: IrSimpleFunctionSymbol = getInternalFunction("getKClass")
+    val getKClassFromExpression: IrSimpleFunctionSymbol = getInternalFunction("getKClassFromExpression")
+    val getTypeInfoData: IrSimpleFunctionSymbol = getInternalFunction("wasmGetTypeInfoData")
     val wasmTypeInfoData: IrClassSymbol = getInternalClass("TypeInfoData")
     val primitiveClassesObject = getInternalClass("PrimitiveClasses")
 

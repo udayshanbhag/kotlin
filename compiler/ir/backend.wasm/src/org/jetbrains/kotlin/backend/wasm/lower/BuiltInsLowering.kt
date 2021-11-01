@@ -128,9 +128,10 @@ class BuiltInsLowering(val context: WasmBackendContext) : FileLoweringPass {
                 val newSymbol = irBuiltins.suspendFunctionN(arity).getSimpleFunction("invoke")!!
                 return irCall(call, newSymbol, argumentsAsReceivers = true)
             }
-            symbols.jsClass -> {
+            symbols.getTypeInfoData -> {
                 val infoDataCtor = symbols.wasmTypeInfoData.constructors.first()
                 val type = call.getTypeArgument(0)!!
+                val isInterface = type.isInterface()
                 val fqName = type.classFqName!!
                 val packageName = fqName.parentOrNull()?.asString() ?: ""
                 val typeName = fqName.shortName().asString()
@@ -143,8 +144,9 @@ class BuiltInsLowering(val context: WasmBackendContext) : FileLoweringPass {
 
                     irCallConstructor(infoDataCtor, emptyList()).also {
                         it.putValueArgument(0, typeId)
-                        it.putValueArgument(1, packageName.toIrConst(context.irBuiltIns.stringType))
-                        it.putValueArgument(2, typeName.toIrConst(context.irBuiltIns.stringType))
+                        it.putValueArgument(1, isInterface.toIrConst(context.irBuiltIns.booleanType))
+                        it.putValueArgument(2, packageName.toIrConst(context.irBuiltIns.stringType))
+                        it.putValueArgument(3, typeName.toIrConst(context.irBuiltIns.stringType))
                     }
                 }
             }

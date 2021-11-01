@@ -33,9 +33,9 @@ import org.jetbrains.kotlin.name.Name
 
 class WasmIntrinsics(private val context: WasmBackendContext) : Intrinsics {
 
-    override val jsGetKClass: IrSimpleFunctionSymbol get() = context.wasmSymbols.jsGetKClass
-    override val jsGetKClassFromExpression: IrSimpleFunctionSymbol get() = context.wasmSymbols.jsGetKClassFromExpression
-    override val jsClass: IrSimpleFunctionSymbol get() = context.wasmSymbols.jsClass
+    override val getKClass: IrSimpleFunctionSymbol get() = context.wasmSymbols.getKClass
+    override val getKClassFromExpression: IrSimpleFunctionSymbol get() = context.wasmSymbols.getKClassFromExpression
+    override val getClassData: IrSimpleFunctionSymbol get() = context.wasmSymbols.getTypeInfoData
 
     override val createKType: IrSimpleFunctionSymbol?
         get() = TODO("Not yet implemented")
