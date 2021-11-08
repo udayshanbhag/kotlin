@@ -3,12 +3,7 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package kotlin
+package kotlin.text
 
-/**
- * Creates a Char with the specified [code].
- *
- * @sample samples.text.Chars.charFromCode
- */
-@SinceKotlin("1.5")
-public actual fun Char(code: UShort): Char = TODO("Wasm stdlib: CharCode")
+internal fun Char.Companion.toCodePoint(high: Char, low: Char): Int =
+    (((high - MIN_HIGH_SURROGATE) shl 10) or (low - MIN_LOW_SURROGATE)) + 0x10000
