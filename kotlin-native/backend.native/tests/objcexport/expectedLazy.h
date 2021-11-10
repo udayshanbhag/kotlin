@@ -352,6 +352,7 @@ __attribute__((swift_name("CoroutinesKt")))
  Other uncaught Kotlin exceptions are fatal.
 */
 + (void)invoke1Block:(id<KtKotlinSuspendFunction1>)block argument:(id _Nullable)argument completionHandler:(void (^)(id _Nullable_result, NSError * _Nullable))completionHandler __attribute__((swift_name("invoke1(block:argument:completionHandler:)")));
++ (void)gc __attribute__((swift_name("gc()")));
 @end;
 
 __attribute__((swift_name("DeallocRetainBase")))

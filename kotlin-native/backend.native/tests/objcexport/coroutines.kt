@@ -44,14 +44,16 @@ suspend fun unitSuspendFun(doSuspend: Boolean, doThrow: Boolean) {
 }
 
 class ContinuationHolder<T> {
-    internal lateinit var continuation: Continuation<T>
+    internal var continuation: Continuation<T>? = null
 
     fun resume(value: T) {
-        continuation.resume(value)
+        continuation!!.resume(value)
+        continuation = null
     }
 
     fun resumeWithException(exception: Throwable) {
-        continuation.resumeWithException(exception)
+        continuation!!.resumeWithException(exception)
+        continuation = null
     }
 }
 
@@ -203,3 +205,5 @@ private suspend fun suspendCallableReference1Target(str: String): String = "$str
 fun getSuspendCallableReference1(): suspend (String) -> String = ::suspendCallableReference1Target
 
 suspend fun invoke1(block: suspend (Any?) -> Any?, argument: Any?): Any? = block(argument)
+
+fun gc() = kotlin.native.internal.GC.collect()
