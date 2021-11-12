@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.AbstractJsScriptlikeCodeAnalyser
 import org.jetbrains.kotlin.scripting.compiler.plugin.repl.ReplCodeAnalyzerBase
 import org.jetbrains.kotlin.scripting.compiler.plugin.repl.toSourceCode
+import org.jetbrains.kotlin.scripting.definitions.ReplEarlierScripts
 import org.jetbrains.kotlin.scripting.definitions.ScriptPriorities
 
 class JsReplCodeAnalyzer(
@@ -21,8 +22,10 @@ class JsReplCodeAnalyzer(
     private val replState: ReplCodeAnalyzerBase.ResettableAnalyzerState
 ) : AbstractJsScriptlikeCodeAnalyser(environment, dependencies) {
 
-    fun analyzeReplLine(linePsi: KtFile, codeLine: ReplCodeLine): AnalysisResult {
-        linePsi.script!!.putUserData(ScriptPriorities.PRIORITY_KEY, codeLine.no)
+    fun analyzeReplLine(linePsi: KtFile, codeLine: ReplCodeLine, hasEarlierScripts: Boolean): AnalysisResult {
+        val script = linePsi.script!!
+        script.putUserData(ScriptPriorities.PRIORITY_KEY, codeLine.no)
+        ReplEarlierScripts.setHasEarlierScripts(script, hasEarlierScripts)
         replState.submitLine(linePsi)
 
         val result = analysisImpl(linePsi)

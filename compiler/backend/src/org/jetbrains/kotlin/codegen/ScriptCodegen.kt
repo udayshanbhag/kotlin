@@ -79,10 +79,7 @@ class ScriptCodegen private constructor(
             classBuilder: ClassBuilder,
             methodContext: MethodContext
     ) {
-        val jvmSignature = typeMapper.mapScriptSignature(
-            scriptDescriptor,
-            scriptContext.earlierScripts
-        )
+        val jvmSignature = typeMapper.mapScriptSignature(scriptDescriptor)
         val asmMethod = jvmSignature.asmMethod
 
         scriptContext.resultFieldInfo?.let { resultFieldInfo ->

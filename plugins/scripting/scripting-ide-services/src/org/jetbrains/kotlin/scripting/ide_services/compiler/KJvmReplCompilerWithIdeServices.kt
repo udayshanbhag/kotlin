@@ -128,7 +128,12 @@ class KJvmReplCompilerWithIdeServices(hostConfiguration: ScriptingHostConfigurat
 
         val analyzerEngine = compilationState.analyzerEngine as IdeLikeReplCodeAnalyzer
         val analysisResult =
-            analyzerEngine.statelessAnalyzeWithImportedScripts(snippetKtFile, emptyList(), state.getNextLineNo() + 1)
+            analyzerEngine.statelessAnalyzeWithImportedScripts(
+                snippetKtFile,
+                emptyList(),
+                state.getNextLineNo() + 1,
+                state.hasEarlierScripts
+            )
         AnalyzerWithCompilerReport.reportDiagnostics(analysisResult.diagnostics, errorHolder)
 
         val (_, bindingContext, resolutionFacade, moduleDescriptor, resultProperty) = when (analysisResult) {

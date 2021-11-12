@@ -58,7 +58,8 @@ class JsCoreScriptingCompiler(
         val analyzerState = replCompilerState?.analyzerState ?: ReplCodeAnalyzerBase.ResettableAnalyzerState()
 
         val analyzerEngine = JsReplCodeAnalyzer(environment, dependencyDescriptors, analyzerState)
-        val analysisResult = analyzerEngine.analyzeReplLine(snippetKtFile, codeLine).also {
+        val hasEarlierScripts = replCompilerState?.hasEarlierScripts ?: false
+        val analysisResult = analyzerEngine.analyzeReplLine(snippetKtFile, codeLine, hasEarlierScripts).also {
             AnalyzerWithCompilerReport.reportDiagnostics(it.bindingContext.diagnostics, messageCollector)
             if (messageCollector.hasErrors()) return ReplCompileResult.Error("Error while analysis")
         }

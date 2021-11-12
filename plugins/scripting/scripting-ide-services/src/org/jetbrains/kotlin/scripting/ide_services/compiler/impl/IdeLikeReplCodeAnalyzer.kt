@@ -42,13 +42,10 @@ class IdeLikeReplCodeAnalyzer(
     fun statelessAnalyzeWithImportedScripts(
         psiFile: KtFile,
         importedScripts: List<KtFile>,
-        priority: Int
+        priority: Int,
+        hasEarlierScripts: Boolean
     ): ReplLineAnalysisResultWithStateless {
-        topDownAnalysisContext.scripts.clear()
-        trace.clearDiagnostics()
-
-        psiFile.script!!.putUserData(ScriptPriorities.PRIORITY_KEY, priority)
-
+        prepareForAnalyze(psiFile, priority, hasEarlierScripts)
         return doStatelessAnalyze(psiFile, importedScripts)
     }
 

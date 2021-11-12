@@ -57,6 +57,8 @@ interface IReplStageState<T> {
 
     fun getNextLineNo(): Int = history.peek()?.id?.no?.let { it + 1 } ?: REPL_CODE_LINE_FIRST_NO // TODO: it should be more robust downstream (e.g. use atomic)
 
+    val hasEarlierScripts: Boolean get() = history.isNotEmpty()
+
     @Suppress("UNCHECKED_CAST")
     fun <StateT : IReplStageState<*>> asState(target: Class<out StateT>): StateT =
         if (target.isAssignableFrom(this::class.java)) this as StateT

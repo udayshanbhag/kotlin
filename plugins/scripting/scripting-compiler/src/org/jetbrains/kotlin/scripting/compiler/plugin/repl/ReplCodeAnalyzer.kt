@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.resolve.scopes.ImportingScope
 import org.jetbrains.kotlin.resolve.scopes.utils.parentsWithSelf
 import org.jetbrains.kotlin.resolve.scopes.utils.replaceImportingScopes
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.ReplPackageViewDescriptorFactory
+import org.jetbrains.kotlin.scripting.definitions.ReplEarlierScripts
 import org.jetbrains.kotlin.scripting.definitions.ScriptPriorities
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.jvm.util.CompiledHistoryItem
@@ -100,12 +101,22 @@ open class ReplCodeAnalyzerBase(
 
     fun reset(): List<SourceCodeByReplLine> = replState.reset()
 
-    fun analyzeReplLine(psiFile: KtFile, codeLine: ReplCodeLine): ReplLineAnalysisResult {
+    protected fun prepareForAnalyze(
+        psiFile: KtFile,
+        priority: Int,
+        hasEarlierScripts: Boolean
+    ) {
         topDownAnalysisContext.scripts.clear()
         trace.clearDiagnostics()
 
-        psiFile.script!!.putUserData(ScriptPriorities.PRIORITY_KEY, codeLine.no)
+        val script = psiFile.script!!
 
+        script.putUserData(ScriptPriorities.PRIORITY_KEY, priority)
+        ReplEarlierScripts.setHasEarlierScripts(script, hasEarlierScripts)
+    }
+
+    fun analyzeReplLine(psiFile: KtFile, codeLine: ReplCodeLine, hasEarlierScripts: Boolean): ReplLineAnalysisResult {
+        prepareForAnalyze(psiFile, codeLine.no, hasEarlierScripts)
         return doAnalyze(psiFile, emptyList(), codeLine.toSourceCode())
     }
 
@@ -113,13 +124,10 @@ open class ReplCodeAnalyzerBase(
         psiFile: KtFile,
         importedScripts: List<KtFile>,
         codeLine: SourceCode,
-        priority: Int
+        priority: Int,
+        hasEarlierScripts: Boolean
     ): ReplLineAnalysisResult {
-        topDownAnalysisContext.scripts.clear()
-        trace.clearDiagnostics()
-
-        psiFile.script!!.putUserData(ScriptPriorities.PRIORITY_KEY, priority)
-
+        prepareForAnalyze(psiFile, priority, hasEarlierScripts)
         return doAnalyze(psiFile, importedScripts, codeLine.addNo(priority))
     }
 
@@ -210,6 +218,8 @@ open class ReplCodeAnalyzerBase(
         private val successfulLines = ResettableSnippetsHistory<LineInfo.SuccessfulLine>()
 
         private val submittedLines = hashMapOf<KtFile, LineInfo>()
+
+        val hasSuccessfulLines get() = successfulLines.isNotEmpty()
 
         fun resetToLine(lineId: ILineId): List<SourceCodeByReplLine> {
             val removed = successfulLines.resetToLine(lineId)

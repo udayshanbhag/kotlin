@@ -109,7 +109,8 @@ open class KJvmReplCompilerBase<AnalyzerT : ReplCodeAnalyzerBase>(
                         snippetKtFile,
                         sourceFiles.drop(1),
                         snippet,
-                        snippetNo
+                        snippetNo,
+                        state.hasEarlierScripts
                     )
                 AnalyzerWithCompilerReport.reportDiagnostics(analysisResult.diagnostics, errorHolder)
 

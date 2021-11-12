@@ -78,7 +78,7 @@ open class GenericReplCompiler(
                 classpathAddendum = newDependencies?.let { checker.environment.updateClasspath(it.classpath.map(::JvmClasspathRoot)) }
             }
 
-            val analysisResult = compilerState.analyzerEngine.analyzeReplLine(psiFile, codeLine)
+            val analysisResult = compilerState.analyzerEngine.analyzeReplLine(psiFile, codeLine, state.hasEarlierScripts)
             AnalyzerWithCompilerReport.reportDiagnostics(analysisResult.diagnostics, errorHolder)
             val scriptDescriptor = when (analysisResult) {
                 is ReplCodeAnalyzerBase.ReplLineAnalysisResult.WithErrors -> {
