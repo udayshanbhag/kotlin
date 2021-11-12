@@ -369,6 +369,9 @@ class IrDescriptorBasedFunctionFactory(
             newFunction.extensionReceiverParameter = descriptor.extensionReceiverParameter?.let { newFunction.createValueParameter(it) }
             newFunction.valueParameters = descriptor.valueParameters.map { newFunction.createValueParameter(it) }
             newFunction.correspondingPropertySymbol = property
+            newFunction.annotations = descriptor.annotations.mapNotNull(
+                typeTranslator.constantValueGenerator::generateAnnotationConstructorCall
+            )
 
             return newFunction
         }
@@ -390,6 +393,9 @@ class IrDescriptorBasedFunctionFactory(
                     parent = this@addFakeOverrides
                     getter = descriptor.getter?.let { g -> createFakeOverrideFunction(g, symbol) }
                     setter = descriptor.setter?.let { s -> createFakeOverrideFunction(s, symbol) }
+                    annotations = descriptor.annotations.mapNotNull(
+                        typeTranslator.constantValueGenerator::generateAnnotationConstructorCall
+                    )
                 }
             }
         }

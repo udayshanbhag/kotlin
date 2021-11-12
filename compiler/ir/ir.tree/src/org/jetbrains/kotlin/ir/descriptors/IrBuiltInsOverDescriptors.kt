@@ -19,10 +19,9 @@ import org.jetbrains.kotlin.ir.BuiltInOperatorNames
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
-import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrExternalPackageFragment
-import org.jetbrains.kotlin.ir.declarations.IrFactory
+import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrExternalPackageFragmentImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
@@ -38,6 +37,7 @@ import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.referenceClassifier
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.types.*
@@ -82,7 +82,9 @@ class IrBuiltInsOverDescriptors(
     private fun ClassDescriptor.toIrSymbol() = symbolTable.referenceClass(this)
     private fun KotlinType.toIrType() = typeTranslator.translateType(this)
 
-    private fun defineOperator(name: String, returnType: IrType, valueParameterTypes: List<IrType>): IrSimpleFunctionSymbol {
+    private fun defineOperator(
+        name: String, returnType: IrType, valueParameterTypes: List<IrType>, isFoldable: Boolean = false
+    ): IrSimpleFunctionSymbol {
         val operatorDescriptor =
             IrSimpleBuiltinOperatorDescriptorImpl(packageFragmentDescriptor, Name.identifier(name), returnType.originalKotlinType!!)
 
@@ -112,6 +114,12 @@ class IrBuiltInsOverDescriptors(
                 ).apply {
                     parent = operator
                 }
+            }
+
+            if (isFoldable) {
+                operator.annotations += IrConstructorCallImpl.fromSymbolDescriptor(
+                    UNDEFINED_OFFSET, UNDEFINED_OFFSET, foldableType, foldableConstructor
+                )
             }
 
             operator
@@ -207,7 +215,7 @@ class IrBuiltInsOverDescriptors(
     }
 
     private fun defineComparisonOperator(name: String, operandType: IrType) =
-        defineOperator(name, booleanType, listOf(operandType, operandType))
+        defineOperator(name, booleanType, listOf(operandType, operandType), isFoldable = true)
 
     private fun List<IrType>.defineComparisonOperatorForEachIrType(name: String) =
         associate { it.classifierOrFail to defineComparisonOperator(name, it) }
@@ -216,6 +224,19 @@ class IrBuiltInsOverDescriptors(
     override val anyType = any.toIrType()
     override val anyClass = builtIns.any.toIrSymbol()
     override val anyNType = anyType.withHasQuestionMark(true)
+
+    val foldable = builtIns.foldableType
+    private val foldableType = foldable.toIrType()
+    private val foldableClass = builtIns.foldable.toIrSymbol()
+//    private val foldableConstructor = symbolTable.referenceConstructor(builtIns.foldable.constructors.single())
+//    private val foldableConstructor = symbolTable.declareConstructor(builtIns.foldable.constructors.single()) {
+//        irFactory.createConstructor(
+//            UNDEFINED_OFFSET, UNDEFINED_OFFSET, object : IrDeclarationOriginImpl("BUILTIN_CLASS_CONSTRUCTOR") {}, it,
+//            SpecialNames.INIT, visibility = DescriptorVisibilities.PUBLIC, foldableType,
+//            isInline = false, isExternal = false, isPrimary = true, isExpect = false
+//        ).apply { this.parent = foldableClass.owner }
+//    }.symbol
+    private val foldableConstructor = symbolTable.referenceConstructor(builtIns.foldable.constructors.single())
 
     val bool = builtIns.booleanType
     override val booleanType = bool.toIrType()
@@ -358,19 +379,22 @@ class IrBuiltInsOverDescriptors(
     override val greaterFunByOperandType = primitiveIrTypesWithComparisons.defineComparisonOperatorForEachIrType(BuiltInOperatorNames.GREATER)
 
     override val ieee754equalsFunByOperandType =
-        primitiveFloatingPointIrTypes.map {
-            it.classifierOrFail to defineOperator(BuiltInOperatorNames.IEEE754_EQUALS, booleanType, listOf(it.makeNullable(), it.makeNullable()))
-        }.toMap()
+        primitiveFloatingPointIrTypes.associate {
+            val operator = defineOperator(
+                BuiltInOperatorNames.IEEE754_EQUALS, booleanType, listOf(it.makeNullable(), it.makeNullable()), isFoldable = true
+            )
+            it.classifierOrFail to operator
+        }
 
     val booleanNot = builtIns.boolean.unsubstitutedMemberScope.getContributedFunctions(Name.identifier("not"), NoLookupLocation.FROM_BACKEND).single()
     override val booleanNotSymbol = symbolTable.referenceSimpleFunction(booleanNot)
 
-    override val eqeqeqSymbol = defineOperator(BuiltInOperatorNames.EQEQEQ, booleanType, listOf(anyNType, anyNType))
-    override val eqeqSymbol = defineOperator(BuiltInOperatorNames.EQEQ, booleanType, listOf(anyNType, anyNType))
+    override val eqeqeqSymbol = defineOperator(BuiltInOperatorNames.EQEQEQ, booleanType, listOf(anyNType, anyNType), isFoldable = true)
+    override val eqeqSymbol = defineOperator(BuiltInOperatorNames.EQEQ, booleanType, listOf(anyNType, anyNType), isFoldable = true)
     override val throwCceSymbol = defineOperator(BuiltInOperatorNames.THROW_CCE, nothingType, listOf())
     override val throwIseSymbol = defineOperator(BuiltInOperatorNames.THROW_ISE, nothingType, listOf())
-    override val andandSymbol = defineOperator(BuiltInOperatorNames.ANDAND, booleanType, listOf(booleanType, booleanType))
-    override val ororSymbol = defineOperator(BuiltInOperatorNames.OROR, booleanType, listOf(booleanType, booleanType))
+    override val andandSymbol = defineOperator(BuiltInOperatorNames.ANDAND, booleanType, listOf(booleanType, booleanType), isFoldable = true)
+    override val ororSymbol = defineOperator(BuiltInOperatorNames.OROR, booleanType, listOf(booleanType, booleanType), isFoldable = true)
     override val noWhenBranchMatchedExceptionSymbol = defineOperator(BuiltInOperatorNames.NO_WHEN_BRANCH_MATCHED_EXCEPTION, nothingType, listOf())
     override val illegalArgumentExceptionSymbol = defineOperator(BuiltInOperatorNames.ILLEGAL_ARGUMENT_EXCEPTION, nothingType, listOf(stringType))
 
