@@ -56,7 +56,7 @@ abstract class IncrementalCompilerRunner<
 ) {
 
     protected val cacheDirectory = File(workingDir, cacheDirName)
-    private val dirtySourcesSinceLastTimeFile = File(workingDir, DIRTY_SOURCES_FILE_NAME)
+    protected val dirtySourcesSinceLastTimeFile = File(workingDir, DIRTY_SOURCES_FILE_NAME)
     protected val lastBuildInfoFile = File(workingDir, LAST_BUILD_INFO_FILE_NAME)
     protected val abiSnapshotFile = File(workingDir, ABI_SNAPSHOT_FILE_NAME)
     protected open val kotlinSourceFilesExtensions: List<String> = DEFAULT_KOTLIN_SOURCE_FILES_EXTENSIONS
@@ -308,7 +308,7 @@ abstract class IncrementalCompilerRunner<
         messageCollector: MessageCollector
     ): ExitCode
 
-    private fun compileIncrementally(
+    protected open fun compileIncrementally(
         args: Args,
         caches: CacheManager,
         allKotlinSources: List<File>,
@@ -393,9 +393,8 @@ abstract class IncrementalCompilerRunner<
                 caches.platformCache.updateComplementaryFiles(dirtySources, expectActualTracker)
                 caches.inputsCache.registerOutputForSourceFiles(generatedFiles)
                 caches.lookupCache.update(lookupTracker, sourcesToCompile, removedKotlinSources)
-            updateCaches(services, caches, generatedFiles, changesCollector)
-
-}
+                updateCaches(services, caches, generatedFiles, changesCollector)
+            }
             if (compilationMode is CompilationMode.Rebuild) {
                 if (withSnapshot) {
                     abiSnapshot.protos.putAll(changesCollector.protoDataChanges())
