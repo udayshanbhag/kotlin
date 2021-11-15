@@ -326,10 +326,20 @@ sealed class ConeStubType(val constructor: ConeStubTypeConstructor, override val
     }
 }
 
-class ConeStubTypeForBuilderInference(variable: ConeTypeVariable, nullability: ConeNullability) :
-    ConeStubType(ConeStubTypeConstructor(variable, isTypeVariableInSubtyping = false), nullability)
-class ConeStubTypeForTypeVariableInSubtyping(variable: ConeTypeVariable, nullability: ConeNullability) :
-    ConeStubType(ConeStubTypeConstructor(variable, isTypeVariableInSubtyping = true), nullability)
+class ConeStubTypeForBuilderInference(
+    constructor: ConeStubTypeConstructor,
+    nullability: ConeNullability
+) : ConeStubType(constructor, nullability) {
+    constructor(variable: ConeTypeVariable, nullability: ConeNullability) :
+            this(ConeStubTypeConstructor(variable, isTypeVariableInSubtyping = false), nullability)
+}
+class ConeStubTypeForTypeVariableInSubtyping(
+    constructor: ConeStubTypeConstructor,
+    nullability: ConeNullability
+) : ConeStubType(constructor, nullability) {
+    constructor(variable: ConeTypeVariable, nullability: ConeNullability) :
+            this(ConeStubTypeConstructor(variable, isTypeVariableInSubtyping = true), nullability)
+}
 
 open class ConeTypeVariable(name: String, originalTypeParameter: TypeParameterMarker? = null) : TypeVariableMarker {
     val typeConstructor = ConeTypeVariableTypeConstructor(name, originalTypeParameter)
