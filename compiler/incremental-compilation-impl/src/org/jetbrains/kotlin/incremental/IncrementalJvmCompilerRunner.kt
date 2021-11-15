@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
+import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.config.Services
@@ -79,17 +80,23 @@ fun makeIncrementally(
     val buildReporter = BuildReporter(icReporter = reporter, buildMetricsReporter = DoNothingBuildMetricsReporter)
 
     withIC {
-        val compiler = IncrementalJvmCompilerRunner(
-            cachesDir,
-            buildReporter,
-            // Use precise setting in case of non-Gradle build
-            usePreciseJavaTracking = !args.useFir, // TODO: add fir-based java classes tracker when available and set this to true
-            outputFiles = emptyList(),
-            buildHistoryFile = buildHistoryFile,
-            modulesApiHistory = EmptyModulesApiHistory,
-            kotlinSourceFilesExtensions = kotlinExtensions,
-            classpathChanges = ReservedForTestsOnly
-        )
+        val compiler =
+            if (args.useFir)
+                IncrementalFirJvmCompilerRunner(
+                    cachesDir, buildReporter, buildHistoryFile, emptyList(), EmptyModulesApiHistory, kotlinExtensions, ReservedForTestsOnly
+                )
+            else
+                IncrementalJvmCompilerRunner(
+                    cachesDir,
+                    buildReporter,
+                    // Use precise setting in case of non-Gradle build
+                    usePreciseJavaTracking = !args.useFir, // TODO: add fir-based java classes tracker when available and set this to true
+                    outputFiles = emptyList(),
+                    buildHistoryFile = buildHistoryFile,
+                    modulesApiHistory = EmptyModulesApiHistory,
+                    kotlinSourceFilesExtensions = kotlinExtensions,
+                    classpathChanges = ReservedForTestsOnly
+                )
         //TODO set properly
         compiler.compile(sourceFiles, args, messageCollector, providedChangedFiles = null)
     }
