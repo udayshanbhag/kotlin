@@ -154,7 +154,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
                 }
                 val delegate = property.delegate
                 if (delegate != null) {
-                    transformPropertyAccessorsWithDelegate(property, delegate)
+                    transformPropertyAccessorsWithDelegate(property)
                     property.replaceBodyResolveState(FirPropertyBodyResolveState.EVERYTHING_RESOLVED)
                 } else {
                     val hasNonDefaultAccessors = property.getter != null && property.getter !is FirDefaultPropertyAccessor ||
@@ -215,7 +215,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
         }
     }
 
-    private fun transformPropertyAccessorsWithDelegate(property: FirProperty, delegateExpression: FirExpression) {
+    private fun transformPropertyAccessorsWithDelegate(property: FirProperty) {
 
         context.forPropertyDelegateAccessors(property, resolutionContext, callCompleter) {
             // Resolve delegate expression, after that, delegate will contain either expr.provideDelegate or expr
@@ -321,7 +321,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
         val hadExplicitType = variable.returnTypeRef !is FirImplicitTypeRef
 
         if (delegate != null) {
-            transformPropertyAccessorsWithDelegate(variable, delegate)
+            transformPropertyAccessorsWithDelegate(variable)
             // This ensures there's no ImplicitTypeRef
             // left in the backingField (witch is always present).
             variable.transformBackingField(transformer, withExpectedType(variable.returnTypeRef))
