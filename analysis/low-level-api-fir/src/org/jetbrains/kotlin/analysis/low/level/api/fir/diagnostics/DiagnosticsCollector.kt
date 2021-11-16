@@ -20,7 +20,14 @@ internal class DiagnosticsCollector(
         val fileStructure = fileStructureCache.getFileStructure(element.containingKtFile, cache)
         val structureElement = fileStructure.getStructureElementFor(element)
         val diagnostics = structureElement.diagnostics
-        return diagnostics.diagnosticsFor(filter, element)
+        val diagnosticsFromStructureElements = diagnostics.diagnosticsFor(filter, element)
+
+        val fileStructureElement = fileStructure.getStructureElementFor(element.containingKtFile)
+        return if (fileStructureElement == structureElement) {
+            diagnosticsFromStructureElements
+        } else {
+            fileStructureElement.diagnostics.diagnosticsFor(filter, element) + diagnosticsFromStructureElements
+        }
     }
 
     fun collectDiagnosticsForFile(ktFile: KtFile, filter: DiagnosticCheckerFilter): Collection<KtPsiDiagnostic> {
