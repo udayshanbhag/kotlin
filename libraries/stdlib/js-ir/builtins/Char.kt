@@ -11,11 +11,11 @@ package kotlin
  */
 public value class Char
 @kotlin.internal.LowPriorityInOverloadResolution
-private constructor(private val value: Int) : Comparable<Char> {
+internal constructor(private val value: Int) : Comparable<Char> {
 
     @SinceKotlin("1.5")
     @WasExperimental(ExperimentalStdlibApi::class)
-    constructor(code: UShort) : this(code.toInt())
+    public constructor(code: UShort) : this(code.toInt())
 
     /**
      * Compares this value with the specified value for order.
