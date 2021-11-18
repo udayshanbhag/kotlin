@@ -31,3 +31,5 @@ actual val supportsSuppressedExceptions: Boolean get() = false
 
 // TODO: implement named group reference in replacement expression
 public actual val supportsNamedCapturingGroup: Boolean get() = false
+
+public actual val regexUnicodeCodePointHandling: Boolean get() = TODO()
