@@ -195,7 +195,7 @@ class FirTypeIntersectionScope private constructor(
                 }
             }
         }
-        removeIf { (member, _) -> member.fir.unwrapSubstitutionOverrides().symbol in baseMembers }
+        //removeIf { (member, _) -> member.fir.unwrapSubstitutionOverrides().symbol in baseMembers }
         return this
     }
 

@@ -143,7 +143,7 @@ object FirNotImplementedOverrideChecker : FirClassChecker() {
                     (it.containingClass()?.toSymbol(context.session) as? FirRegularClassSymbol)?.classKind == ClassKind.CLASS
                 }
             ) {
-                reporter.reportOn(source, MANY_IMPL_MEMBER_NOT_IMPLEMENTED, classSymbol, notImplementedIntersectionSymbol, context)
+//                reporter.reportOn(source, MANY_IMPL_MEMBER_NOT_IMPLEMENTED, classSymbol, notImplementedIntersectionSymbol, context)
             } else {
                 reporter.reportOn(
                     source,
