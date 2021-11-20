@@ -32,4 +32,4 @@ public actual val supportsSuppressedExceptions: Boolean get() = true
 
 public actual val supportsNamedCapturingGroup: Boolean get() = false
 
-public actual val regexUnicodeCodePointHandling: Boolean get() = false
+public actual val regexUnicodeCodePointHandling: Boolean get() = true
