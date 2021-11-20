@@ -66,8 +66,7 @@ class CliJavaModuleFinder(
 
     private val ctSymRootFolder: VirtualFile? by lazy {
         if (ctSymFile != null) {
-            VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.JAR_PROTOCOL)
-                ?.findFileByPath(ctSymFile?.path + URLUtil.JAR_SEPARATOR)
+            StandardFileSystems.jar()?.findFileByPath(ctSymFile?.path + URLUtil.JAR_SEPARATOR)
                 ?: reportError("Can't open `ct.sym` as jar file, file path: ${ctSymFile?.path} ")
         } else {
             null
