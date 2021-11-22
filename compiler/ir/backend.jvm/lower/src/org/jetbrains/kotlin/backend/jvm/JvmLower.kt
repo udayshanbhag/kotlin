@@ -284,7 +284,6 @@ private val jvmFilePhases = listOf(
     mainMethodGenerationPhase,
 
     inventNamesForLocalClassesPhase,
-    kCallableNamePropertyPhase,
     annotationPhase,
     annotationImplementationPhase,
     polymorphicSignaturePhase,
@@ -334,8 +333,6 @@ private val jvmFilePhases = listOf(
     jvmDefaultConstructorPhase,
 
     flattenStringConcatenationPhase,
-    foldConstantLoweringPhase,
-    computeStringTrimPhase,
     jvmStringConcatenationLowering,
 
     defaultArgumentStubPhase,
