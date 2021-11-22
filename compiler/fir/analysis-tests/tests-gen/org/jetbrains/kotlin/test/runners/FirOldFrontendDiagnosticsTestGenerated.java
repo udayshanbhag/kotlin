@@ -4540,6 +4540,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             }
 
             @Test
+            @TestMetadata("kt49276.kt")
+            public void testKt49276() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/checkArguments/kt49276.kt");
+            }
+
+            @Test
             @TestMetadata("overloadedFunction.kt")
             public void testOverloadedFunction() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/checkArguments/overloadedFunction.kt");
