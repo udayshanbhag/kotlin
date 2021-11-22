@@ -356,12 +356,8 @@ internal class BridgeLowering(val context: JvmBackendContext) : FileLoweringPass
             .forEach { irClass.addBridge(it, bridgeTarget) }
     }
 
-    private fun IrSimpleFunction.isClashingWithPotentialBridge(name: Name, signature: Method): Boolean {
-        if (this.isFakeOverride && this.modality != Modality.FINAL) return false
-        if (this.name != name) return false
-        if (this.jvmMethod != signature) return false
-        return true
-    }
+    private fun IrSimpleFunction.isClashingWithPotentialBridge(name: Name, signature: Method): Boolean =
+        (!this.isFakeOverride || this.modality == Modality.FINAL) && this.name == name && this.jvmMethod == signature
 
 
     // Returns the special bridge overridden by the current methods if it exists.
