@@ -1,3 +1,4 @@
+// SKIP_KLIB_TEST
 // FULL_JDK
 interface MSS : Map<String, String>
 
