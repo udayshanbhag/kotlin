@@ -1030,6 +1030,28 @@ class GeneralKotlin2JsGradlePluginIT : BaseGradleIT() {
     }
 
     @Test
+    fun testNodeJsAndYarnNotDownloaded() {
+        with(transformProjectWithPluginsDsl("nodeJsDownload")) {
+            gradleBuildScript().modify {
+                it + "\n" +
+                        """
+                        rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin> {
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().nodeVersion = "unspecified"
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().download = false
+                        }
+                        rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin> {
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension>().version = "unspecified"
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension>().download = false
+                        }
+                        """
+            }
+            build("kotlinNodeJsSetup", "kotlinYarnSetup") {
+                assertSuccessful()
+            }
+        }
+    }
+
+    @Test
     fun testIncrementalDceDevModeOnExternalDependency() = with(transformProjectWithPluginsDsl("kotlin-js-browser-project")) {
         val libBuildscript = projectDir.resolve("lib/build.gradle.kts")
 
