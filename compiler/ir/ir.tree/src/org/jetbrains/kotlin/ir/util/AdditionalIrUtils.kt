@@ -69,12 +69,13 @@ val IrFunction.isSuspend get() = this is IrSimpleFunction && this.isSuspend
 
 val IrFunction.isReal get() = !(this is IrSimpleFunction && isFakeOverride)
 
-fun <S : IrSymbol> IrOverridableDeclaration<S>.overrides(other: IrOverridableDeclaration<S>): Boolean {
+fun <S : IrSymbol> IrOverridableDeclaration<S>.overrides(other: IrOverridableDeclaration<S>, depth: Int = 0): Boolean {
     if (this == other) return true
+    if (depth > 100) throw AssertionError(this.render())
 
     this.overriddenSymbols.forEach {
         @Suppress("UNCHECKED_CAST")
-        if ((it.owner as IrOverridableDeclaration<S>).overrides(other)) {
+        if ((it.owner as IrOverridableDeclaration<S>).overrides(other, depth + 1)) {
             return true
         }
     }
