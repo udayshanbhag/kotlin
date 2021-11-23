@@ -353,7 +353,7 @@ class FakeOverrideGenerator(
                 is IrSimpleFunction -> {
                     val baseSymbols = getOverriddenSymbolsForFakeOverride(declaration)!!
                     declaration.withFunction {
-                        overriddenSymbols = baseSymbols
+                        overriddenSymbols = baseSymbols.filterNot { declaration.symbol === it }
                     }
                 }
                 is IrProperty -> {
@@ -390,7 +390,9 @@ class FakeOverrideGenerator(
         val overriddenIrSymbols = getOverriddenSymbolsInSupertypes(this, firOverriddenSymbols) {
             declarationStorage.getIrPropertySymbol(it) as IrPropertySymbol
         }
-        val overriddenIrProperties = overriddenIrSymbols.map { it.owner }
+        val overriddenIrProperties = overriddenIrSymbols.mapNotNull { overriddenIrSymbol ->
+            overriddenIrSymbol.owner.takeIf { it !== this }
+        }
 
         getter?.apply {
             overriddenSymbols = overriddenIrProperties.mapNotNull { it.getter?.symbol }
