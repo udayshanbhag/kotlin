@@ -117,7 +117,7 @@ public object DebugSymbolRenderer {
         append(KtConstantValueRenderer.render(value))
     }
 
-    private fun Block.renderNamedConstantValue(value: KtNamedConstantValue) {
+    private fun Block.renderNamedConstantValue(value: KtNamedAnnotationValue) {
         append(value.name).append(" = ")
         renderValue(value.expression)
     }
@@ -164,7 +164,7 @@ public object DebugSymbolRenderer {
             is KtSymbol -> renderSymbolTag(value)
             is KtType -> renderType(value)
             is KtAnnotationValue -> renderConstantValue(value)
-            is KtNamedConstantValue -> renderNamedConstantValue(value)
+            is KtNamedAnnotationValue -> renderNamedConstantValue(value)
             is KtInitializerValue -> renderKtInitializerValue(value)
             is KtAnnotationApplication -> renderAnnotationApplication(value)
             is KtAnnotationsList -> renderAnnotationsList(value)
