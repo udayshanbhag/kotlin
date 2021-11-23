@@ -208,11 +208,12 @@ internal fun IrClass.getOriginalPropertyByName(name: String): IrProperty {
 
 internal fun IrFunctionAccessExpression.getFunctionThatContainsDefaults(): IrFunction {
     val irFunction = this.symbol.owner
-    fun IrValueParameter.lookup(): IrFunction? {
+    fun IrValueParameter.lookup(depth: Int = 0): IrFunction? {
+        if (depth > 50) throw AssertionError(render())
         return defaultValue?.let { this.parent as IrFunction }
             ?: (this.parent as? IrSimpleFunction)?.overriddenSymbols
                 ?.map { it.owner.valueParameters[this.index] }
-                ?.firstNotNullOfOrNull { it.lookup() }
+                ?.firstNotNullOfOrNull { it.lookup(depth + 1) }
     }
 
     return (0 until this.valueArgumentsCount)

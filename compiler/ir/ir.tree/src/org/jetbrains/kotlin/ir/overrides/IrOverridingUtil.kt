@@ -349,15 +349,17 @@ class IrOverridingUtil(
 
     private fun collectOverriddenDeclarations(
         member: IrOverridableMember,
-        result: MutableSet<IrOverridableMember>
+        result: MutableSet<IrOverridableMember>,
+        depth: Int = 0
     ) {
         if (member.isReal) {
             result.add(member)
         } else {
+            if (depth > 50) throw AssertionError(member.render())
             check(member.overriddenSymbols.isNotEmpty()) { "No overridden descriptors found for (fake override) $member" }
             for (overridden in member.original.overriddenSymbols.map { it.owner as IrOverridableMember }) {
                 val original = overridden.original
-                collectOverriddenDeclarations(original, result)
+                collectOverriddenDeclarations(original, result, depth + 1)
                 result.add(original)
             }
         }

@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
+import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.org.objectweb.asm.commons.Method
 import java.util.concurrent.ConcurrentHashMap
@@ -40,7 +41,8 @@ class BridgeLoweringCache(private val context: JvmBackendContext) {
         return false
     }
 
-    fun computeSpecialBridge(function: IrSimpleFunction): SpecialBridge? {
+    fun computeSpecialBridge(function: IrSimpleFunction, depth: Int = 0): SpecialBridge? {
+        if (depth > 50) throw AssertionError(function.render())
         // Optimization: do not try to compute special bridge for irrelevant methods.
         val correspondingProperty = function.correspondingPropertySymbol
         if (correspondingProperty != null) {
@@ -68,7 +70,7 @@ class BridgeLoweringCache(private val context: JvmBackendContext) {
             )
 
         for (overridden in function.overriddenSymbols) {
-            val specialBridge = computeSpecialBridge(overridden.owner) ?: continue
+            val specialBridge = computeSpecialBridge(overridden.owner, depth + 1) ?: continue
             if (!specialBridge.needsGenericSignature) return specialBridge
 
             // Compute the substituted signature.

@@ -1221,10 +1221,11 @@ class Fir2IrDeclarationStorage(
         val originalSymbol = dispatchReceiverLookupTag.getIrCallableSymbol()
         val originalProperty = originalSymbol.owner as IrProperty
 
-        fun IrProperty.isIllegalFakeOverride(): Boolean {
+        fun IrProperty.isIllegalFakeOverride(depth: Int = 0): Boolean {
             if (!isFakeOverride) return false
+            if (depth > 50) throw AssertionError(render())
             val overriddenSymbols = overriddenSymbols
-            if (overriddenSymbols.isEmpty() || overriddenSymbols.any { it.owner.isIllegalFakeOverride() }) {
+            if (overriddenSymbols.isEmpty() || overriddenSymbols.any { it.owner.isIllegalFakeOverride(depth + 1) }) {
                 return true
             }
             return false
