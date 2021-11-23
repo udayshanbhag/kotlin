@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.load.kotlin
 
-import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptorImpl
@@ -16,8 +15,10 @@ import org.jetbrains.kotlin.metadata.deserialization.NameResolver
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.constants.*
+import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 import org.jetbrains.kotlin.serialization.deserialization.AnnotationDeserializer
 import org.jetbrains.kotlin.storage.StorageManager
+import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.compact
 
@@ -117,21 +118,29 @@ class BinaryClassAnnotationAndConstantLoaderImpl(
             }
 
             override fun visitArrayValue(name: Name?, elements: ArrayList<ConstantValue<*>>) {
-                val type = methodSignature.signature.substringAfterLast(')')
                 defaultValue = ArrayValue(elements.compact()) { moduleDescriptor ->
-                    when (type) {
-                        "[I" -> moduleDescriptor.builtIns.getPrimitiveArrayKotlinType(PrimitiveType.INT)
-                        "[Ljava/lang/String;" -> moduleDescriptor.builtIns.getArrayType(
-                            Variance.INVARIANT,
-                            moduleDescriptor.builtIns.stringType
-                        )
-                        else -> TODO("Need to support array type $type") // How to get KotlinType from MemberSignature?
-                    }
+                    guessArrayType(elements, moduleDescriptor)
                 }
             }
 
             override fun visitEnd() {
                 defaultValue?.let(visitResult)
+            }
+
+            private fun guessArrayType(
+                elements: ArrayList<ConstantValue<*>>,
+                moduleDescriptor: ModuleDescriptor
+            ): KotlinType {
+                if (elements.isNotEmpty())
+                    return moduleDescriptor.builtIns.getArrayType(Variance.INVARIANT, elements.first().getType(moduleDescriptor))
+
+                val desc = methodSignature.signature.substringAfterLast(')').removePrefix("[")
+                // check for primitive
+                JvmPrimitiveType.getByDesc(desc)?.let { return moduleDescriptor.builtIns.getPrimitiveArrayKotlinType(it.primitiveType) }
+                // String, enum or another annotation
+                val targetId = ClassId.fromString(desc.removePrefix("L").removeSuffix(";"))
+                val loadedClass = resolveClass(targetId)
+                return moduleDescriptor.builtIns.getArrayType(Variance.INVARIANT, loadedClass.defaultType)
             }
         }
     }
