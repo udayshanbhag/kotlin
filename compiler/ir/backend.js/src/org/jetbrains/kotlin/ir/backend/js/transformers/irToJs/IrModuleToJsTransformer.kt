@@ -39,7 +39,7 @@ class IrModuleToJsTransformer(
     var namer: NameTables = NameTables(emptyList(), context = backendContext),
     private val fullJs: Boolean = true,
     private val dceJs: Boolean = false,
-    private val multiModule: Boolean = false,
+    private val multiModule: Boolean = true,
     private val relativeRequirePath: Boolean = false,
     private val moduleToName: Map<IrModuleFragment, String> = emptyMap(),
     private val removeUnusedAssociatedObjects: Boolean = true,

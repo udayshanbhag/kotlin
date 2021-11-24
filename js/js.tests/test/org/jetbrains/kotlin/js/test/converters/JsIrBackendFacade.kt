@@ -79,7 +79,7 @@ class JsIrBackendFacade(
             !firstTimeCompilation -> JsGenerationGranularity.WHOLE_PROGRAM
             splitPerModule || perModule -> JsGenerationGranularity.PER_MODULE
             splitPerFile -> JsGenerationGranularity.PER_FILE
-            else -> JsGenerationGranularity.WHOLE_PROGRAM
+            else -> JsGenerationGranularity.PER_MODULE
         }
 
         val testPackage = extractTestPackage(testServices)

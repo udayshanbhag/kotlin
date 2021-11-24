@@ -168,7 +168,7 @@ class K2JSCompilerArguments : CommonCompilerArguments() {
     var irSafeExternalBooleanDiagnostic: String? by NullableStringFreezableVar(null)
 
     @Argument(value = "-Xir-per-module", description = "Splits generated .js per-module")
-    var irPerModule: Boolean by FreezableVar(false)
+    var irPerModule: Boolean by FreezableVar(true)
 
     @Argument(value = "-Xir-per-module-output-name", description = "Adds a custom output name to the splitted js files")
     var irPerModuleOutputName: String? by NullableStringFreezableVar(null)
