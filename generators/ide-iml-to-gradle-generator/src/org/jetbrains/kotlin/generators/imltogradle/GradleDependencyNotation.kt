@@ -36,7 +36,7 @@ open class GradleDependencyNotation(val dependencyNotation: String, val dependen
         }
     }
 
-    object IntellijCoreGradleDependencyNotation : GradleDependencyNotation("intellijCoreDep()", null)
+    object IntellijCoreGradleDependencyNotation : GradleDependencyNotation("intellijCore()", null)
 
     data class IntellijPluginDepGradleDependencyNotation(val pluginName: String) :
         GradleDependencyNotation("intellijPluginDep(\"$pluginName\", forIde = true)")

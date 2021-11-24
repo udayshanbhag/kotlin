@@ -10,7 +10,7 @@ project.configureJvmToolchain(JdkMajorVersion.JDK_11)
 dependencies {
     testImplementation(kotlinStdlib())
     testImplementation(project(":kotlin-reflect"))
-    testImplementation(intellijCoreDep()) { includeJars("intellij-core") }
+    testImplementation(intellijCore())
     testImplementation(intellijPluginDep("java"))
     testImplementation(project(":kotlin-compiler-runner-unshaded"))
     testImplementation(projectTests(":compiler:tests-common"))
@@ -19,7 +19,8 @@ dependencies {
     testImplementation(projectTests(":generators:test-generator"))
     testApiJUnit5()
 
-    testRuntimeOnly(intellijDep()) { includeJars("trove4j", "intellij-deps-fastutil-8.4.1-4") }
+    testRuntimeOnly(intellijDependency("trove4j"))
+    testRuntimeOnly(intellijDependency("intellij-deps-fastutil"))
 }
 
 val generationRoot = projectDir.resolve("tests-gen")

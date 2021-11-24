@@ -152,22 +152,6 @@ if (!project.hasProperty("versions.kotlin-native")) {
 
 val useJvmFir by extra(project.kotlinBuildProperties.useFir)
 
-val intellijSeparateSdks = project.getBooleanProperty("intellijSeparateSdks") ?: false
-
-extra["intellijSeparateSdks"] = intellijSeparateSdks
-
-extra["IntellijCoreDependencies"] =
-    listOf(
-        "asm-all-9.0",
-        "guava",
-        "jdom",
-        "jna",
-        "log4j",
-        "snappy-in-java",
-        "streamex",
-        "trove4j"
-    ).filterNotNull()
-
 val irCompilerModules = arrayOf(
     ":compiler:ir.tree",
     ":compiler:ir.tree.impl",
@@ -433,6 +417,10 @@ allprojects {
         maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
 
         jcenter()
+
+        maven("https://www.jetbrains.com/intellij-repository/releases")
+        maven("https://www.jetbrains.com/intellij-repository/snapshots")
+        maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
     }
 
     if (path.startsWith(":kotlin-ide.")) {

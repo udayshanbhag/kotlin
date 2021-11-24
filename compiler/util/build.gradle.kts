@@ -7,9 +7,11 @@ dependencies {
     api(kotlinStdlib())
     api(project(":compiler:compiler.version"))
 
-    compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
-    compileOnly(intellijDep()) { includeIntellijCoreJarDependencies(project) }
-    compileOnly(jpsStandalone()) { includeJars("jps-model") }
+    compileOnly(intellijCore())
+    compileOnly(intellijDependency("log4j"))
+    compileOnly(intellijDependency("asm-all"))
+    compileOnly("com.jetbrains.intellij.platform:jps-model:${rootProject.extra["versions.intellijSdk"]}")
+    compileOnly("com.jetbrains.intellij.platform:jps-model-impl:${rootProject.extra["versions.intellijSdk"]}")
 }
 
 sourceSets {
