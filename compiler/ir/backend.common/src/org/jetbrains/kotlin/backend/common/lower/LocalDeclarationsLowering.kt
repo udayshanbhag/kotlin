@@ -100,7 +100,7 @@ class LocalDeclarationsLowering(
     }
 
     override fun lowerScriptBody(irDeclarationContainer: IrDeclarationContainer, container: IrDeclaration) {
-        LocalDeclarationsTransformer(irDeclarationContainer, container, null, true).lowerLocalDeclarations()
+        LocalDeclarationsTransformer(irDeclarationContainer, container, null, false).lowerLocalDeclarations()
     }
 
 

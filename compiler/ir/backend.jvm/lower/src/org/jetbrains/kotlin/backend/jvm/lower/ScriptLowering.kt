@@ -19,14 +19,19 @@ import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.builders.declarations.*
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrAnonymousInitializerImpl
+import org.jetbrains.kotlin.ir.declarations.impl.IrClassImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrExternalPackageFragmentImpl
 import org.jetbrains.kotlin.ir.expressions.*
-import org.jetbrains.kotlin.ir.expressions.impl.*
+import org.jetbrains.kotlin.ir.expressions.impl.IrClassReferenceImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrGetFieldImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrInstanceInitializerCallImpl
 import org.jetbrains.kotlin.ir.interpreter.toIrConst
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.impl.IrAnonymousInitializerSymbolImpl
+import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
@@ -91,7 +96,10 @@ private class ScriptsToClassesLowering(val context: JvmBackendContext) {
 
     private fun finalizeScriptClass(irScriptClass: IrClass, irScript: IrScript, symbolRemapper: ScriptsToClassesSymbolRemapper) {
         val typeRemapper = SimpleTypeRemapper(symbolRemapper)
-        val scriptTransformer = ScriptToClassTransformer(irScript, irScriptClass, symbolRemapper, typeRemapper, context)
+        val classesToConvertToInner = irScript.statements.mapNotNullTo(mutableSetOf()) { statement ->
+            (statement as? IrClassImpl)?.takeIf { it.isInner == false && it.isObject == false }
+        }
+        val scriptTransformer = ScriptToClassTransformer(irScript, irScriptClass, symbolRemapper, typeRemapper, context, classesToConvertToInner)
         val lambdaPatcher = ScriptFixLambdasTransformer(irScript, irScriptClass, context)
 
         fun <E: IrElement> E.patchForClass(): IrElement =
@@ -275,10 +283,21 @@ private class ScriptToClassTransformer(
     val irScriptClass: IrClass,
     val symbolRemapper: SymbolRemapper,
     val typeRemapper: TypeRemapper,
-    val context: JvmBackendContext
+    val context: JvmBackendContext,
+    val classesToConvertToInner: Set<IrClassImpl>
 ) : IrElementTransformerVoid() {
 
     private fun IrType.remapType() = typeRemapper.remapType(this)
+
+    val constructorsToClassesToConvertToInner = mutableMapOf<IrConstructor, IrClassImpl>().apply {
+        classesToConvertToInner.forEach { c ->
+            c.declarations.forEach { d ->
+                if (d is IrConstructor) {
+                    put(d, c)
+                }
+            }
+        }
+    }
 
     private fun IrDeclaration.transformParent() {
         if (parent == irScript) {
@@ -332,6 +351,11 @@ private class ScriptToClassTransformer(
         superTypes = superTypes.map {
             it.remapType()
         }
+        (declaration as? IrClassImpl)?.let {
+            if (it in classesToConvertToInner) {
+                it.isInner = true
+            }
+        }
         visitDeclaration(declaration)
     }
 
@@ -341,6 +365,20 @@ private class ScriptToClassTransformer(
     }
 
     override fun visitConstructor(declaration: IrConstructor): IrConstructor = declaration.apply {
+        if (declaration in constructorsToClassesToConvertToInner) {
+            declaration.dispatchReceiverParameter =
+                IrValueParameterBuilder().run<IrValueParameterBuilder, IrValueParameter> {
+                    name = SpecialNames.THIS
+                    type = irScriptClass.defaultType
+                    declaration.factory.createValueParameter(
+                        startOffset, endOffset, IrDeclarationOrigin.INSTANCE_RECEIVER,
+                        IrValueParameterSymbolImpl(),
+                        name, index, type, varargElementType, isCrossInline, isNoinline, isHidden, isAssignable
+                    ).also {
+                        it.parent = declaration
+                    }
+                }
+        }
         transformParent()
         transformFunctionChildren()
     }
@@ -398,6 +436,18 @@ private class ScriptToClassTransformer(
             putTypeArgument(i, getTypeArgument(i)?.remapType())
         }
         visitExpression(expression)
+    }
+
+    override fun visitConstructorCall(expression: IrConstructorCall): IrExpression {
+        constructorsToClassesToConvertToInner.keys.find { it.symbol == expression.symbol }?.let {
+            expression.dispatchReceiver = IrGetValueImpl(
+                expression.startOffset, expression.endOffset,
+                irScriptClass.defaultType,
+                irScriptClass.thisReceiver!!.symbol,
+                expression.origin
+            )
+        }
+        return super.visitConstructorCall(expression)
     }
 
     private fun getAccessCallForEarlierScript(expression: IrDeclarationReference, maybeScriptType: IrType): IrExpression? {
