@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.container.useInstance
 import org.jetbrains.kotlin.context.ModuleContext
 import org.jetbrains.kotlin.contracts.ContractDeserializerImpl
 import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
+import org.jetbrains.kotlin.extensions.TypeAttributeTranslatorExtension
 import org.jetbrains.kotlin.idea.MainFunctionDetector
 import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
 import org.jetbrains.kotlin.incremental.components.InlineConstTracker
@@ -49,7 +50,6 @@ import org.jetbrains.kotlin.types.expressions.DeclarationScopeProviderForLocalCl
 import org.jetbrains.kotlin.types.expressions.LocalClassDescriptorHolder
 import org.jetbrains.kotlin.types.expressions.LocalLazyDeclarationResolver
 import org.jetbrains.kotlin.types.extensions.TypeAttributeTranslators
-import org.jetbrains.kotlin.types.extensions.TypeAttributeTranslatorsForInjection
 import org.jetbrains.kotlin.util.ProgressManagerBasedCancellationChecker
 
 fun StorageComponentContainer.configureModule(
@@ -81,7 +81,7 @@ fun StorageComponentContainer.configureModule(
     analyzerServices.platformConfigurator.configureModuleComponents(this)
     analyzerServices.platformConfigurator.configureModuleDependentCheckers(this)
 
-    useInstance(TypeAttributeTranslatorsForInjection(TypeAttributeTranslators(moduleContext.project).translators))
+    useInstance(TypeAttributeTranslators(TypeAttributeTranslatorExtension.getInstances(moduleContext.project)))
 
     for (extension in StorageComponentContainerContributor.getInstances(moduleContext.project)) {
         extension.registerModuleComponents(this, platform, moduleContext.module)
