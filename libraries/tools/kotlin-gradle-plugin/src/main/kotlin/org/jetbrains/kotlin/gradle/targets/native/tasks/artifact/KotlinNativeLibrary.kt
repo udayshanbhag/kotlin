@@ -42,7 +42,7 @@ class KotlinNativeLibrary : KotlinNativeArtifact() {
     override fun registerAssembleTask(project: Project, name: String) {
 
         val resultTask = project.registerTask<Task>(
-            lowerCamelCaseName("assemble", kind.taskNameClassifier, "Library", name)
+            lowerCamelCaseName("assemble", name, kind.taskNameClassifier, "Library")
         ) { task ->
             task.group = BasePlugin.BUILD_GROUP
             task.description = "Assemble all types of registered '$name' ${kind.description}."
@@ -54,7 +54,7 @@ class KotlinNativeLibrary : KotlinNativeArtifact() {
         val exportConfigurationName = project.registerExportDependencies(target, name, modules)
         modes.forEach { buildType ->
             val targetTask = project.registerTask<KotlinNativeLinkArtifactTask>(
-                lowerCamelCaseName("assemble", buildType.visibleName, kind.taskNameClassifier, "Library", name, target.presetName),
+                lowerCamelCaseName("assemble", name, buildType.visibleName, kind.taskNameClassifier, "Library", target.presetName),
                 listOf(target, kind.compilerOutputKind)
             ) { task ->
                 task.description = "Assemble ${kind.description} '$name' for a target '${target.name}'."

@@ -40,7 +40,7 @@ class KotlinNativeFatFramework : KotlinNativeArtifact() {
     }
 
     override fun registerAssembleTask(project: Project, name: String) {
-        val parentTask = project.registerTask<Task>(lowerCamelCaseName("assemble", "FatFramework", name)) {
+        val parentTask = project.registerTask<Task>(lowerCamelCaseName("assemble", name, "FatFramework")) {
             it.group = "build"
             it.description = "Assemble all types of registered '$name' FatFramework"
         }

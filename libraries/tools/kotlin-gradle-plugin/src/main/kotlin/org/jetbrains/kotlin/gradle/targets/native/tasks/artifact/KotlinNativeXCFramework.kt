@@ -40,7 +40,7 @@ class KotlinNativeXCFramework : KotlinNativeArtifact() {
     }
 
     override fun registerAssembleTask(project: Project, name: String) {
-        val parentTask = project.registerTask<Task>(lowerCamelCaseName("assemble", "XCFramework", name)) {
+        val parentTask = project.registerTask<Task>(lowerCamelCaseName("assemble", name, "XCFramework")) {
             it.group = "build"
             it.description = "Assemble all types of registered '$name' XCFramework"
         }

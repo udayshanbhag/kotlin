@@ -43,7 +43,7 @@ class KotlinNativeFramework : KotlinNativeArtifact() {
     }
 
     override fun registerAssembleTask(project: Project, name: String) {
-        val resultTask = project.registerTask<Task>(lowerCamelCaseName("assemble", kind.taskNameClassifier, name)) { task ->
+        val resultTask = project.registerTask<Task>(lowerCamelCaseName("assemble", name, kind.taskNameClassifier)) { task ->
             task.group = BasePlugin.BUILD_GROUP
             task.description = "Assemble ${kind.description} '$name'."
             task.enabled = target.enabledOnCurrentHost
@@ -80,7 +80,7 @@ internal fun KotlinNativeArtifact.registerLinkFrameworkTask(
     val kind = NativeOutputKind.FRAMEWORK
     val destinationDir = project.buildDir.resolve("$outDirName/${kind.visibleName}/${target.visibleName}/${buildType.visibleName}")
     val resultTask = project.registerTask<KotlinNativeLinkArtifactTask>(
-        lowerCamelCaseName("assemble", buildType.visibleName, kind.taskNameClassifier, name, target.presetName, taskNameSuffix),
+        lowerCamelCaseName("assemble", name, buildType.visibleName, kind.taskNameClassifier, target.presetName, taskNameSuffix),
         listOf(target, kind.compilerOutputKind)
     ) { task ->
         task.description = "Assemble ${kind.description} '$name' for a target '${target.name}'."
