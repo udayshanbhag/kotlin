@@ -9926,6 +9926,12 @@ public class NativeExtBlackBoxTestGenerated extends AbstractNativeBlackBoxTest {
             }
 
             @Test
+            @TestMetadata("kt49294.kt")
+            public void testKt49294() throws Exception {
+                runTest("compiler/testData/codegen/box/coroutines/kt49294.kt");
+            }
+
+            @Test
             @TestMetadata("lastExpressionIsLoop.kt")
             public void testLastExpressionIsLoop() throws Exception {
                 runTest("compiler/testData/codegen/box/coroutines/lastExpressionIsLoop.kt");
