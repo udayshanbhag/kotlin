@@ -84,7 +84,7 @@ internal fun KotlinNativeArtifact.registerLinkFrameworkTask(
         listOf(target, kind.compilerOutputKind)
     ) { task ->
         task.description = "Assemble ${kind.description} '$name' for a target '${target.name}'."
-        task.enabled = target.enabledOnCurrentHost && kind.availableFor(target)
+        task.enabled = target.enabledOnCurrentHost
         task.baseName = name
         task.destinationDir = destinationDir
         task.optimized = buildType.optimized

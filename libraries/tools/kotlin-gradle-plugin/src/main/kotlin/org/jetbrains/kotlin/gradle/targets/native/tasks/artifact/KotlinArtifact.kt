@@ -27,8 +27,8 @@ abstract class KotlinArtifact {
         modules.add(project)
     }
 
-    abstract fun validate(project: Project, name: String): Boolean
-    abstract fun registerAssembleTask(project: Project, name: String)
+    internal abstract fun validate(project: Project, name: String): Boolean
+    internal abstract fun registerAssembleTask(project: Project, name: String)
 }
 
 abstract class KotlinNativeArtifact : KotlinArtifact() {
@@ -50,6 +50,7 @@ abstract class KotlinNativeArtifact : KotlinArtifact() {
         val logger = project.logger
         if (modules.isEmpty()) {
             logger.error("Native library '${name}' wasn't configured because it requires at least one module for linking")
+            return false
         }
 
         if (modes.isEmpty()) {

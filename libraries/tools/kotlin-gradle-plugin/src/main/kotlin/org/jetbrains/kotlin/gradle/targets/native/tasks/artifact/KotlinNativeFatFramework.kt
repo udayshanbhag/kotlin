@@ -55,7 +55,7 @@ class KotlinNativeFatFramework : KotlinNativeArtifact() {
             }
             parentTask.dependsOn(fatTask)
 
-            val nameSuffix = name + "ForFat"
+            val nameSuffix = "ForFat"
             val frameworkDescriptors: List<FrameworkDescriptor> = targets.map { target ->
                 val librariesConfigurationName = project.registerLibsDependencies(target, name + nameSuffix, modules)
                 val exportConfigurationName = project.registerExportDependencies(target, name + nameSuffix, modules)

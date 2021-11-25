@@ -58,17 +58,14 @@ class KotlinNativeLibrary : KotlinNativeArtifact() {
                 listOf(target, kind.compilerOutputKind)
             ) { task ->
                 task.description = "Assemble ${kind.description} '$name' for a target '${target.name}'."
-                task.enabled = target.enabledOnCurrentHost && kind.availableFor(target)
-
+                task.enabled = target.enabledOnCurrentHost
                 task.baseName = name
                 task.optimized = buildType.optimized
                 task.debuggable = buildType.debuggable
                 task.linkerOptions = linkerOptions
                 task.binaryOptions = binaryOptions
-
                 task.librariesConfiguration = librariesConfigurationName
                 task.exportLibrariesConfiguration = exportConfigurationName
-
                 task.kotlinOptions(kotlinOptionsFn)
             }
             resultTask.dependsOn(targetTask)

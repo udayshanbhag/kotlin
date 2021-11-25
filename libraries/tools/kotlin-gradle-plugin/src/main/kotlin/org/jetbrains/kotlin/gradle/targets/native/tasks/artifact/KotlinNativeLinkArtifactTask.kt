@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.gradle.targets.native.tasks.artifact
 
 import groovy.lang.Closure
+import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.*
@@ -117,9 +118,8 @@ open class KotlinNativeLinkArtifactTask @Inject constructor(
         kotlinOptions.fn()
     }
 
-    fun kotlinOptions(fn: Closure<*>) {
-        fn.delegate = kotlinOptions
-        fn.call()
+    fun kotlinOptions(fn: Action<KotlinCommonToolOptions>) {
+        fn.execute(kotlinOptions)
     }
 
     @get:Input
