@@ -16,7 +16,7 @@ import kotlin.test.assertTrue
 @RunWith(Parameterized::class)
 internal class HierarchicalStructureOptInMigrationArtifactContentIT : BaseGradleIT() {
     enum class Mode {
-        FLIPPED_DEFAULT, FLIPPED_DISABLE, NON_FLIPPED_DEFAULT
+        FLIPPED_DEFAULT, FLIPPED_DISABLE, FLIPPED_BACK_DEFAULT
     }
 
     companion object {
@@ -39,12 +39,12 @@ internal class HierarchicalStructureOptInMigrationArtifactContentIT : BaseGradle
                 add("clean")
                 add("publish")
                 when (mode) {
-                    FLIPPED_DISABLE, FLIPPED_DEFAULT -> add("-Pkotlin.internal.mpp.hierarchicalStructureByDefault=true")
-                    NON_FLIPPED_DEFAULT -> {}
+                    FLIPPED_DISABLE, FLIPPED_DEFAULT -> {}
+                    FLIPPED_BACK_DEFAULT -> { add("-Pkotlin.internal.mpp.hierarchicalStructureByDefault=false") }
                 }
                 when (mode) {
                     FLIPPED_DISABLE -> add("-Pkotlin.mpp.hierarchicalStructureSupport=false")
-                    FLIPPED_DEFAULT, NON_FLIPPED_DEFAULT -> {}
+                    FLIPPED_DEFAULT, FLIPPED_BACK_DEFAULT -> {}
                 }
             }.toTypedArray(),
         ) {
@@ -55,13 +55,13 @@ internal class HierarchicalStructureOptInMigrationArtifactContentIT : BaseGradle
                 zip.entries().asSequence().toList().map { it.name }
             }
 
-            if (mode != NON_FLIPPED_DEFAULT) {
+            if (mode != FLIPPED_BACK_DEFAULT) {
                 assertTrue { metadataJarEntries.any { "commonMain" in it } }
             }
 
             val hasJvmAndJsMainEntries = metadataJarEntries.any { "jvmAndJsMain" in it }
             val shouldHaveJvmAndJsMainEntries = when (mode) {
-                FLIPPED_DISABLE, NON_FLIPPED_DEFAULT -> false
+                FLIPPED_DISABLE, FLIPPED_BACK_DEFAULT -> false
                 FLIPPED_DEFAULT -> true
             }
             assertEquals(shouldHaveJvmAndJsMainEntries, hasJvmAndJsMainEntries)
