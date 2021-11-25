@@ -76,7 +76,7 @@ internal val specialBackendChecksPhase = konanUnitPhase(
 )
 
 internal val removeExpectDeclarationsPhase = makeKonanModuleLoweringPhase(
-        ::ExpectDeclarationsRemoving,
+        ::ExpectDeclarationsRemoveLowering,
         name = "RemoveExpectDeclarations",
         description = "Expect declarations removing"
 )

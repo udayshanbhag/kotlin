@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.backend.konan
 import org.jetbrains.kotlin.backend.common.CheckDeclarationParentsVisitor
 import org.jetbrains.kotlin.backend.common.IrValidator
 import org.jetbrains.kotlin.backend.common.IrValidatorConfig
+import org.jetbrains.kotlin.backend.common.lower.ExpectDeclarationRemover
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.common.phaser.*
 import org.jetbrains.kotlin.backend.common.serialization.CompatibilityMode
@@ -27,10 +28,7 @@ import org.jetbrains.kotlin.ir.expressions.IrGetObjectValue
 import org.jetbrains.kotlin.ir.expressions.IrGetField
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.util.*
-import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
-import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
-import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
-import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
+import org.jetbrains.kotlin.ir.visitors.*
 import org.jetbrains.kotlin.konan.target.CompilerOutputKind
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -182,7 +180,7 @@ internal val destroySymbolTablePhase = konanUnitPhase(
 // That requires some design and implementation work.
 internal val copyDefaultValuesToActualPhase = konanUnitPhase(
         op = {
-            ExpectToActualDefaultValueCopier(irModule!!).process()
+            irModule!!.acceptVoid(ExpectDeclarationRemover(symbolTable!!, false))
         },
         name = "CopyDefaultValuesToActual",
         description = "Copy default values from expect to actual declarations"
@@ -542,8 +540,8 @@ val toplevelPhase: CompilerPhase<*, Unit, Unit> = namedUnitPhase(
                 buildCExportsPhase then
                 psiToIrPhase then
                 buildAdditionalCacheInfoPhase then
-                destroySymbolTablePhase then
                 copyDefaultValuesToActualPhase then
+                destroySymbolTablePhase then
                 checkSamSuperTypesPhase then
                 serializerPhase then
                 specialBackendChecksPhase then
