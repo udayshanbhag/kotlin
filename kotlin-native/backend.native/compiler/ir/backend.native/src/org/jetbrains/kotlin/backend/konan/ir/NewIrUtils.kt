@@ -24,9 +24,8 @@ import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
-import org.jetbrains.kotlin.ir.types.IdSignatureValues
-import org.jetbrains.kotlin.ir.types.classifierOrFail
-import org.jetbrains.kotlin.ir.types.isMarkedNullable
+import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
+import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.name.FqName
@@ -144,3 +143,18 @@ val IrDeclaration.konanLibrary: KotlinLibrary? get() {
 }
 
 fun IrDeclaration.isFromInteropLibrary() = konanLibrary?.isInteropLibrary() == true
+
+fun IrType.containsNull(): Boolean = if (this is IrSimpleType) {
+    if (this.hasQuestionMark) {
+        true
+    } else {
+        val classifier = this.classifier
+        when (classifier) {
+            is IrClassSymbol -> false
+            is IrTypeParameterSymbol -> classifier.owner.superTypes.any { it.containsNull() }
+            else -> error(classifier)
+        }
+    }
+} else {
+    true
+}

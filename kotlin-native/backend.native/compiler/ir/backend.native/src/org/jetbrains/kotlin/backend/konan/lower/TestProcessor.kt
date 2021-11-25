@@ -15,8 +15,6 @@ import org.jetbrains.kotlin.backend.konan.Context
 import org.jetbrains.kotlin.backend.konan.descriptors.isAbstract
 import org.jetbrains.kotlin.backend.konan.descriptors.synthesizedName
 import org.jetbrains.kotlin.backend.konan.getIncludedLibraryDescriptors
-import org.jetbrains.kotlin.backend.konan.ir.typeWithStarProjections
-import org.jetbrains.kotlin.backend.konan.ir.typeWithoutArguments
 import org.jetbrains.kotlin.backend.konan.reportCompilationError
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
@@ -123,7 +121,7 @@ internal class TestProcessor (val context: Context) {
                     putValueArgument(0, IrGetEnumValueImpl(
                             it.function.startOffset,
                             it.function.endOffset,
-                            symbols.testFunctionKind.typeWithoutArguments,
+                            symbols.testFunctionKind.typeWithArguments(emptyList()),
                             testKindEntry)
                     )
                     putValueArgument(1, IrFunctionReferenceImpl(
@@ -349,7 +347,7 @@ internal class TestProcessor (val context: Context) {
                 getterName,
                 DescriptorVisibilities.PROTECTED,
                 Modality.FINAL,
-                objectSymbol.typeWithStarProjections,
+                objectSymbol.starProjectedType,
                 isInline = false,
                 isExternal = false,
                 isTailrec = false,
@@ -368,7 +366,7 @@ internal class TestProcessor (val context: Context) {
             overriddenSymbols += superFunction.symbol
 
             body = context.createIrBuilder(symbol, symbol.owner.startOffset, symbol.owner.endOffset).irBlockBody {
-                +irReturn(irGetObjectValue(objectSymbol.typeWithoutArguments, objectSymbol)
+                +irReturn(irGetObjectValue(objectSymbol.typeWithArguments(emptyList()), objectSymbol)
                 )
             }
         }
@@ -387,7 +385,7 @@ internal class TestProcessor (val context: Context) {
                 getterName,
                 DescriptorVisibilities.PROTECTED,
                 Modality.FINAL,
-                classSymbol.typeWithStarProjections,
+                classSymbol.starProjectedType,
                 isInline = false,
                 isExternal = false,
                 isTailrec = false,
@@ -435,7 +433,7 @@ internal class TestProcessor (val context: Context) {
                 IrConstructorSymbolImpl(),
                 Name.special("<init>"),
                 DescriptorVisibilities.PUBLIC,
-                testSuite.typeWithStarProjections,
+                testSuite.starProjectedType,
                 isInline = false,
                 isExternal = false,
                 isPrimary = true,

@@ -1095,10 +1095,10 @@ private class InteropTransformer(val context: Context, override val irFile: IrFi
                     }
 
                     val receiverClass = symbols.integerClasses.single {
-                        receiver.type.isSubtypeOf(it.owner.defaultType)
+                        receiver.type.isSubtypeOf(it.owner.defaultType, context.typeSystem)
                     }
                     val targetClass = symbols.integerClasses.single {
-                        typeOperand.isSubtypeOf(it.owner.defaultType)
+                        typeOperand.isSubtypeOf(it.owner.defaultType, context.typeSystem)
                     }
 
                     val conversionSymbol = receiverClass.functions.single {

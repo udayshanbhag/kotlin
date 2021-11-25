@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.backend.common.CommonBackendContext
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.lower.*
 import org.jetbrains.kotlin.backend.konan.ir.containsNull
-import org.jetbrains.kotlin.backend.konan.ir.isSubtypeOf
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.expressions.IrExpression
@@ -64,7 +63,7 @@ internal class TypeOperatorLowering(val context: CommonBackendContext) : FileLow
         // TODO: consider the case when expression type is wrong e.g. due to generics-related unchecked casts.
 
         return when {
-            expression.argument.type.isSubtypeOf(typeOperand) -> expression.argument
+            expression.argument.type.isSubtypeOf(typeOperand, context.typeSystem) -> expression.argument
 
             expression.argument.type.containsNull() -> {
                 with(builder) {
