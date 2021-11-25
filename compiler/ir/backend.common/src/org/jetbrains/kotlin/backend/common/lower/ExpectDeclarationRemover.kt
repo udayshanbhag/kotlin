@@ -13,9 +13,8 @@ import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
-import org.jetbrains.kotlin.ir.expressions.impl.IrFunctionReferenceImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrPropertyReferenceImpl
+import org.jetbrains.kotlin.ir.expressions.impl.*
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueParameterSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 import org.jetbrains.kotlin.ir.types.extractTypeParameters
@@ -56,59 +55,123 @@ class ExpectDeclarationRemover(val symbolTable: ReferenceSymbolTable, private va
         return super.visitValueParameter(declaration)
     }
 
+    override fun visitConstructorCall(expression: IrConstructorCall): IrExpression {
+        val nExpression = super.visitConstructorCall(expression) as IrConstructorCall
+        if (!nExpression.symbol.owner.isExpect) return nExpression
+
+        val newCallee = symbolTable.referenceConstructor(
+            nExpression.symbol.descriptor.findActualForExpect() as? ClassConstructorDescriptor ?: return nExpression
+        )
+        with(nExpression) {
+            return IrConstructorCallImpl(
+                startOffset, endOffset, type, newCallee, typeArgumentsCount, constructorTypeArgumentsCount, valueArgumentsCount, origin
+            ).also {
+                it.attributeOwnerId = attributeOwnerId
+                it.copyTypeAndValueArgumentsFrom(nExpression)
+            }
+        }
+    }
+
+    override fun visitDelegatingConstructorCall(expression: IrDelegatingConstructorCall): IrExpression {
+        val nExpression = super.visitDelegatingConstructorCall(expression) as IrDelegatingConstructorCall
+        if (!nExpression.symbol.owner.isExpect) return nExpression
+
+        val newCallee = symbolTable.referenceConstructor(
+            nExpression.symbol.descriptor.findActualForExpect() as? ClassConstructorDescriptor ?: return nExpression
+        )
+        with(nExpression) {
+            return IrDelegatingConstructorCallImpl(
+                startOffset, endOffset, type, newCallee, typeArgumentsCount, valueArgumentsCount
+            ).also {
+                it.attributeOwnerId = attributeOwnerId
+                it.copyTypeAndValueArgumentsFrom(nExpression)
+            }
+        }
+    }
+
+    override fun visitEnumConstructorCall(expression: IrEnumConstructorCall): IrExpression {
+        val nExpression = super.visitEnumConstructorCall(expression) as IrEnumConstructorCall
+        if (!nExpression.symbol.owner.isExpect) return nExpression
+
+        val newCallee = symbolTable.referenceConstructor(
+            nExpression.symbol.descriptor.findActualForExpect() as? ClassConstructorDescriptor ?: return nExpression
+        )
+        with(nExpression) {
+            return IrEnumConstructorCallImpl(
+                startOffset, endOffset, type, newCallee, typeArgumentsCount, valueArgumentsCount
+            ).also {
+                it.attributeOwnerId = attributeOwnerId
+                it.copyTypeAndValueArgumentsFrom(nExpression)
+            }
+        }
+    }
+
     override fun visitCall(expression: IrCall): IrExpression {
         val nExpression = super.visitCall(expression) as IrCall
-        return if (nExpression.symbol.owner.isExpect) {
-            irCall(
-                nExpression,
-                symbolTable.referenceSimpleFunction(
-                    nExpression.symbol.descriptor.findActualForExpect() as? FunctionDescriptor ?: return nExpression
-                )
-            )
-        } else nExpression
+        if (!nExpression.symbol.owner.isExpect) return nExpression
+
+        val newCallee = symbolTable.referenceSimpleFunction(
+            nExpression.symbol.descriptor.findActualForExpect() as? FunctionDescriptor ?: return nExpression
+        )
+        return irCall(nExpression, newCallee).also {
+            it.attributeOwnerId = nExpression.attributeOwnerId
+        }
     }
 
     override fun visitPropertyReference(expression: IrPropertyReference): IrExpression {
         val nExpression = super.visitPropertyReference(expression) as IrPropertyReference
-        return if (nExpression.symbol.owner.isExpect) {
-            val symbol = symbolTable.referenceProperty(
-                nExpression.symbol.descriptor.findActualForExpect() as? PropertyDescriptor ?: return nExpression
-            )
-            val getter = symbol.descriptor.getter?.let { symbolTable.referenceSimpleFunction(it) }
-            val setter = symbol.descriptor.setter?.let { symbolTable.referenceSimpleFunction(it) }
-            IrPropertyReferenceImpl(
-                nExpression.startOffset, nExpression.endOffset, nExpression.type,
-                symbol, nExpression.typeArgumentsCount,
-                nExpression.field, getter, setter,
-                nExpression.origin
-            ).apply {
-                type = nExpression.type
-                attributeOwnerId = nExpression.attributeOwnerId
+        if (!nExpression.symbol.owner.isExpect) return nExpression
+
+        val newSymbol = symbolTable.referenceProperty(
+            nExpression.symbol.descriptor.findActualForExpect() as? PropertyDescriptor ?: return nExpression
+        )
+        val newGetter = newSymbol.descriptor.getter?.let { symbolTable.referenceSimpleFunction(it) }
+        val newSetter = newSymbol.descriptor.setter?.let { symbolTable.referenceSimpleFunction(it) }
+        with(nExpression) {
+            return IrPropertyReferenceImpl(
+                startOffset, endOffset, type,
+                newSymbol, typeArgumentsCount,
+                field, newGetter, newSetter,
+                origin
+            ).also {
+                it.attributeOwnerId = attributeOwnerId
                 copyTypeArgumentsFrom(nExpression)
-                dispatchReceiver = nExpression.dispatchReceiver
-                extensionReceiver = nExpression.extensionReceiver
+                it.dispatchReceiver = dispatchReceiver
+                it.extensionReceiver = extensionReceiver
             }
-        } else nExpression
+        }
     }
 
     override fun visitFunctionReference(expression: IrFunctionReference): IrExpression {
         val nExpression = super.visitFunctionReference(expression) as IrFunctionReference
-        return if (nExpression.symbol.owner.isExpect) {
-            IrFunctionReferenceImpl(
-                nExpression.startOffset, nExpression.endOffset, nExpression.type,
-                symbolTable.referenceSimpleFunction(
-                    nExpression.symbol.descriptor.forceFindActualForExpect() as? FunctionDescriptor ?: return nExpression
-                ),
-                nExpression.typeArgumentsCount, nExpression.valueArgumentsCount,
-                nExpression.reflectionTarget, nExpression.origin
-            ).apply {
-                type = nExpression.type
-                attributeOwnerId = nExpression.attributeOwnerId
-                copyTypeArgumentsFrom(nExpression)
-                dispatchReceiver = nExpression.dispatchReceiver
-                extensionReceiver = nExpression.extensionReceiver
+        if (!nExpression.symbol.owner.isExpect) return nExpression
+
+        val newCallee = symbolTable.referenceSimpleFunction(
+            nExpression.symbol.descriptor.findActualForExpect() as? FunctionDescriptor ?: return nExpression
+        )
+        with(nExpression) {
+            return IrFunctionReferenceImpl(
+                startOffset, endOffset, type, newCallee, typeArgumentsCount, valueArgumentsCount, reflectionTarget, origin
+            ).also {
+                it.attributeOwnerId = attributeOwnerId
+                it.copyTypeArgumentsFrom(nExpression)
+                it.dispatchReceiver = dispatchReceiver
+                it.extensionReceiver = extensionReceiver
             }
-        } else nExpression
+        }
+    }
+
+    override fun visitClassReference(expression: IrClassReference): IrExpression {
+        val nExpression = super.visitClassReference(expression) as IrClassReference
+        val oldSymbol = nExpression.symbol as? IrClassSymbol ?: return nExpression
+        if (!oldSymbol.owner.isExpect) return nExpression
+        
+        val newSymbol = symbolTable.referenceClass(
+            oldSymbol.descriptor.findActualForExpect() as? ClassDescriptor ?: return nExpression
+        )
+        with(nExpression) {
+            return IrClassReferenceImpl(startOffset, endOffset, type, newSymbol, classType)
+        }
     }
 
     fun transformFlat(declaration: IrDeclaration): List<IrDeclaration>? {
@@ -202,9 +265,6 @@ class ExpectDeclarationRemover(val symbolTable: ReferenceSymbolTable, private va
             findCompatibleActualForExpected(this@findActualForExpect.module).singleOrNull()
         }
     }
-
-    private fun MemberDescriptor.forceFindActualForExpect(): MemberDescriptor =
-        findActualForExpect() ?: error("no actual for $this")
 
     private fun MemberDescriptor.findExpectForActual(): MemberDescriptor? {
         if (!isActual) error(this)
