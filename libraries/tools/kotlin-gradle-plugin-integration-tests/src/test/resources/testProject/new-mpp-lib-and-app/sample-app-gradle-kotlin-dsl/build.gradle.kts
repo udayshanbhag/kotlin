@@ -22,8 +22,7 @@ kotlin {
 	val nodeJs = js("nodeJs")
 	val linux64 = linuxX64("linux64")
 
-    wasm {
-    }
+    if (project.findProperty("disable_wasm") != "true") wasm()
 
     configure(listOf(linux64)) {
         binaries.executable("main", listOf(DEBUG)) {

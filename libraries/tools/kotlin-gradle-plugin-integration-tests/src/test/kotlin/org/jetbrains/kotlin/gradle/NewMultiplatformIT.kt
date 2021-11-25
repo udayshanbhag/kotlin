@@ -76,6 +76,14 @@ class NewMultiplatformIT : BaseGradleIT() {
         enableCompatibilityMetadataVariant = compatibilityMetadataArtifact,
     )
 
+    private val disableWasm = true
+
+    private fun Project.setWasmFlag() = apply {
+        setupWorkingDir()
+        gradleProperties()
+            .appendText("\ndisable_wasm=$disableWasm")
+    }
+
     @Test
     fun testLibAndApp() = doTestLibAndApp(
         "sample-lib",
@@ -110,7 +118,9 @@ class NewMultiplatformIT : BaseGradleIT() {
         hmppFlags: HmppFlags,
     ) {
         val libProject = transformNativeTestProjectWithPluginDsl(libProjectName, directoryPrefix = "new-mpp-lib-and-app")
+            .setWasmFlag()
         val appProject = transformNativeTestProjectWithPluginDsl(appProjectName, directoryPrefix = "new-mpp-lib-and-app")
+            .setWasmFlag()
         val oldStyleAppProject = Project("sample-old-style-app", directoryPrefix = "new-mpp-lib-and-app")
 
         val buildOptions = defaultBuildOptions().copy(
@@ -905,7 +915,9 @@ class NewMultiplatformIT : BaseGradleIT() {
     @Test
     fun testResolveMppLibDependencyToMetadata() {
         val libProject = Project("sample-lib", gradleVersion, "new-mpp-lib-and-app")
+            .setWasmFlag()
         val appProject = Project("sample-app", gradleVersion, "new-mpp-lib-and-app")
+            .setWasmFlag()
 
         libProject.build("publish") { assertSuccessful() }
         val localRepo = libProject.projectDir.resolve("repo")
@@ -978,7 +990,9 @@ class NewMultiplatformIT : BaseGradleIT() {
 
     private fun testResolveJsPartOfMppLibDependencyToMetadata(hmppFlags: HmppFlags) {
         val libProject = Project("sample-lib", gradleVersion, "new-mpp-lib-and-app")
+            .setWasmFlag()
         val appProject = Project("sample-app", gradleVersion, "new-mpp-lib-and-app")
+            .setWasmFlag()
 
         val buildOptions = hmppFlags.buildOptions
         libProject.build(

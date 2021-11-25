@@ -48,7 +48,7 @@ kotlin {
 
     js('nodeJs')
 
-    wasm()
+    if (project.findProperty("disable_wasm") != "true") wasm()
 
     targets {
         fromPreset(presets.jvm, 'jvm6') {

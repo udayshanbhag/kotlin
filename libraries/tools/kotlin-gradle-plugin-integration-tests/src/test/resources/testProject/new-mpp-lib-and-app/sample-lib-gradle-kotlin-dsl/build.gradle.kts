@@ -15,7 +15,7 @@ kotlin {
     val jvm = jvm("jvm6")
     val js = js("nodeJs")
     linuxX64("linux64")
-    wasm()
+    if (project.findProperty("disable_wasm") != "true") wasm()
 
     targets.all {
         mavenPublication(Action<MavenPublication> {
