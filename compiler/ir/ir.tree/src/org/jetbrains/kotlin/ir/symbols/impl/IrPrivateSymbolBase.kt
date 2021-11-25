@@ -84,7 +84,7 @@ class IrExternalPackageFragmentSymbolImpl(descriptor: PackageFragmentDescriptor?
 class IrAnonymousInitializerSymbolImpl(descriptor: ClassDescriptor? = null, signature: IdSignature? = null) :
     IrBindableSymbolBase<ClassDescriptor, IrAnonymousInitializer>(descriptor, signature),
     IrAnonymousInitializerSymbol {
-    constructor(irClassSymbol: IrClassSymbol, signature: IdSignature? = null) : this(irClassSymbol.descriptor)
+    constructor(irClassSymbol: IrClassSymbol, signature: IdSignature? = null) : this(irClassSymbol.descriptor, signature)
 }
 
 class IrClassSymbolImpl(descriptor: ClassDescriptor? = null, signature: IdSignature? = null) :
