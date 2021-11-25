@@ -515,7 +515,7 @@ fun Configuration.usesPlatformOf(target: KotlinTarget): Configuration {
         attributes.attribute(KotlinJsCompilerAttribute.jsCompilerAttribute, KotlinJsCompilerAttribute.legacy)
     }
 
-    if (target is KotlinJsIrTarget) {
+    if (target is KotlinJsIrTarget && target.platformType != KotlinPlatformType.wasm) {
         attributes.attribute(KotlinJsCompilerAttribute.jsCompilerAttribute, KotlinJsCompilerAttribute.ir)
     }
 
