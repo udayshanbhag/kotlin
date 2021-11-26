@@ -22,7 +22,7 @@ dependencies {
 
     testCompileOnly(intellijPluginDep("java")) { includeJars("java-api") }
 
-    testRuntimeOnly("xerces:xercesImpl:2.12.0")
+    testRuntimeOnly("xerces:xercesImpl:2.12.1")
     testRuntimeOnly(intellijPluginDep("java"))
 
     testApi(commonDep("junit:junit"))
