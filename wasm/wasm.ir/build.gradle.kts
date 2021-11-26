@@ -10,7 +10,7 @@ dependencies {
     testCompileOnly(project(":kotlin-test:kotlin-test-jvm"))
     testCompileOnly(project(":kotlin-test:kotlin-test-junit"))
     testImplementation(projectTests(":compiler:tests-common"))
-    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.1")
 }
 
 
