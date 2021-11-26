@@ -10706,6 +10706,18 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
             }
 
             @Test
+            @TestMetadata("kt49793_companionObject.kt")
+            public void testKt49793_companionObject() throws Exception {
+                runTest("compiler/testData/codegen/box/delegatedProperty/delegateToAnother/kt49793_companionObject.kt");
+            }
+
+            @Test
+            @TestMetadata("kt49793_object.kt")
+            public void testKt49793_object() throws Exception {
+                runTest("compiler/testData/codegen/box/delegatedProperty/delegateToAnother/kt49793_object.kt");
+            }
+
+            @Test
             @TestMetadata("mutable.kt")
             public void testMutable() throws Exception {
                 runTest("compiler/testData/codegen/box/delegatedProperty/delegateToAnother/mutable.kt");
