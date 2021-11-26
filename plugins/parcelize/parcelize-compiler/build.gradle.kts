@@ -65,7 +65,7 @@ dependencies {
     testRuntimeOnly(intellijPluginDep("junit"))
 
     robolectricClasspath(commonDep("org.robolectric", "robolectric"))
-    robolectricClasspath("org.robolectric:android-all:4.4_r1-robolectric-1")
+    robolectricClasspath("org.robolectric:android-all:12-robolectric-7732740")
     robolectricClasspath(project(":plugins:parcelize:parcelize-runtime")) { isTransitive = false }
     robolectricClasspath(project(":kotlin-android-extensions-runtime")) { isTransitive = false }
 
