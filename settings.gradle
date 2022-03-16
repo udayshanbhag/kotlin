@@ -35,7 +35,7 @@ buildscript {
 plugins {
     id "com.gradle.enterprise" version "3.6.3"
     id "com.gradle.enterprise.test-distribution" version "2.2.1"
-    id "com.gradle.common-custom-user-data-gradle-plugin" version "1.4" apply false
+    id "com.gradle.common-custom-user-data-gradle-plugin" version "1.6.4" apply false
 }
 
 def buildProperties = BuildPropertiesKt.getKotlinBuildPropertiesForSettings(settings)
