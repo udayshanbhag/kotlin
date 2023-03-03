@@ -9,7 +9,7 @@ dependencies {
     compileOnly(kotlinStdlib())
     compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
     testApi(kotlinStdlib())
-    testCompileOnly("org.jetbrains:annotations:13.0")
+    testCompileOnly("org.jetbrains:annotations:24.0.1")
     testApi(project(":kotlin-test:kotlin-test-jvm"))
     testApi(project(":kotlin-test:kotlin-test-junit"))
     testApi(commonDep("junit:junit"))

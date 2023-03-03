@@ -12,7 +12,7 @@ configureJavaOnlyToolchain(JdkMajorVersion.JDK_1_6)
 val kotlinVersion: String by rootProject.extra
 
 dependencies {
-    compileOnly("org.jetbrains:annotations:13.0")
+    compileOnly("org.jetbrains:annotations:24.0.1")
 }
 
 sourceSets {
